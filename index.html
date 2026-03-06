@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>Chord Stage</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,75 +19,71 @@
   --t1:#fff;--t2:#b3b3b3;--t3:#717171;--t4:#3a3a3a;
   --green:#1ed760;--gd:rgba(30,215,96,.12);--gg:rgba(30,215,96,.3);
   --amber:#f59e0b;--ad:rgba(245,158,11,.13);--red:#ff4444;
-  --sw:240px;
+  --sw:240px;--bnav:62px;
   --ui:'Figtree',sans-serif;--dis:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
   --ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{height:100%}
+html{height:100%;-webkit-text-size-adjust:100%}
 body{font-family:var(--ui);background:var(--bg);color:var(--t1);height:100%;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-a{color:inherit;text-decoration:none}
-button{cursor:pointer;font-family:var(--ui);background:none;border:none;color:inherit}
-input,button{-webkit-tap-highlight-color:transparent;outline:none}
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#333;border-radius:99px}::-webkit-scrollbar-thumb:hover{background:#444}
+a{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+button{cursor:pointer;font-family:var(--ui);background:none;border:none;color:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+input{-webkit-tap-highlight-color:transparent;outline:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#333;border-radius:99px}
 
 /* ── LOADING ── */
-#ld{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:3000;transition:opacity .5s,visibility .5s}
+#ld{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:4000;transition:opacity .5s,visibility .5s}
 #ld.gone{opacity:0;visibility:hidden;pointer-events:none}
-.ld-inner{display:flex;flex-direction:column;align-items:center;gap:28px}
-.ld-icon{width:64px;height:64px;background:var(--green);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;animation:ld-pulse 1.6s ease-in-out infinite}
-@keyframes ld-pulse{0%,100%{box-shadow:0 0 0 0 var(--gg)}50%{box-shadow:0 0 0 14px transparent,0 0 44px var(--gd)}}
+.ld-inner{display:flex;flex-direction:column;align-items:center;gap:24px}
+.ld-icon{width:64px;height:64px;background:var(--green);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;animation:ldp 1.6s ease-in-out infinite}
+@keyframes ldp{0%,100%{box-shadow:0 0 0 0 var(--gg)}50%{box-shadow:0 0 0 14px transparent,0 0 44px var(--gd)}}
 .ld-bars{display:flex;align-items:flex-end;gap:4px;height:28px}
-.ld-bar{width:4px;background:var(--green);border-radius:99px;animation:ld-bar .8s ease-in-out infinite}
+.ld-bar{width:4px;background:var(--green);border-radius:99px;animation:ldb .8s ease-in-out infinite}
 .ld-bar:nth-child(1){height:8px;animation-delay:0s}.ld-bar:nth-child(2){height:14px;animation-delay:.12s}
 .ld-bar:nth-child(3){height:22px;animation-delay:.24s}.ld-bar:nth-child(4){height:14px;animation-delay:.36s}
 .ld-bar:nth-child(5){height:8px;animation-delay:.48s}
-@keyframes ld-bar{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+@keyframes ldb{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
 .ld-text{font-family:var(--dis);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--t3)}
 
-/* ── SETTINGS MODAL ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+/* ── SETTINGS MODAL (bottom sheet on mobile, centered on desktop) ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:3000;display:none;align-items:flex-end;justify-content:center;padding:0}
 .overlay.open{display:flex}
-.modal{width:100%;max-width:540px;background:var(--bg3);border:1px solid var(--b);border-radius:22px;overflow:hidden;animation:modal-in .22s var(--spring)}
-@keyframes modal-in{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal-head{display:flex;align-items:center;justify-content:space-between;padding:22px 22px 0}
-.modal-title{font-family:var(--dis);font-size:19px;font-weight:800;letter-spacing:-.02em}
-.modal-x{width:32px;height:32px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--t3);transition:all .15s}
-.modal-x:hover{background:var(--s3);color:var(--t1)}
+.modal{width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:22px 22px 0 0;overflow:hidden;max-height:90vh;display:flex;flex-direction:column;animation:sheetup .26s var(--spring)}
+@keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-drag{width:40px;height:4px;background:var(--s3);border-radius:99px;margin:12px auto 0;flex-shrink:0}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 0;flex-shrink:0}
+.modal-title{font-family:var(--dis);font-size:18px;font-weight:800;letter-spacing:-.02em}
+.modal-x{width:34px;height:34px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--t3);transition:all .15s;flex-shrink:0}
+.modal-x:hover,.modal-x:active{background:var(--s3);color:var(--t1)}
 .modal-x svg{width:16px;height:16px}
-.modal-body{padding:22px}
-
-/* Settings sections */
-.set-section{margin-bottom:20px}
+.modal-body{padding:18px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:max(24px,env(safe-area-inset-bottom))}
 .set-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;font-family:var(--dis)}
 .set-desc{font-size:13px;color:var(--t4);line-height:1.55;margin-bottom:10px}
-.set-input{width:100%;background:var(--bg4);border:1px solid var(--b);border-radius:10px;padding:12px 14px;color:var(--t1);font-family:var(--mono);font-size:13px;transition:border-color .18s,box-shadow .18s}
+.set-input{width:100%;background:var(--bg4);border:1px solid var(--b);border-radius:10px;padding:14px;color:var(--t1);font-family:var(--mono);font-size:16px;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none}
 .set-input::placeholder{color:var(--t4)}
 .set-input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--gd)}
 .set-btns{display:flex;gap:8px;margin-top:10px}
-.btn-primary{flex:1;padding:11px;background:var(--green);border-radius:9px;color:#000;font-size:13px;font-weight:700;font-family:var(--dis);transition:background .15s,transform .15s}
-.btn-primary:hover{background:#24e76a}
-.btn-secondary{padding:11px 15px;background:var(--s2);border:1px solid var(--b);border-radius:9px;color:var(--t2);font-size:13px;font-weight:600;font-family:var(--dis);transition:all .15s}
-.btn-secondary:hover{background:var(--s3);color:var(--t1)}
-.btn-danger{padding:11px 13px;background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.18);border-radius:9px;color:var(--red);font-size:13px;font-weight:600;font-family:var(--dis);transition:all .15s}
-.btn-danger:hover{background:rgba(255,68,68,.14)}
+.btn-primary{flex:1;padding:14px;background:var(--green);border-radius:10px;color:#000;font-size:14px;font-weight:700;font-family:var(--dis);transition:background .15s;min-height:50px}
+.btn-primary:active{background:#24e76a;transform:scale(.97)}
+.btn-secondary{padding:14px 16px;background:var(--s2);border:1px solid var(--b);border-radius:10px;color:var(--t2);font-size:13px;font-weight:600;font-family:var(--dis);min-height:50px}
+.btn-secondary:active{background:var(--s3)}
+.btn-danger{padding:14px;background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.18);border-radius:10px;color:var(--red);font-size:13px;font-weight:600;font-family:var(--dis);min-height:50px}
+.btn-danger:active{background:rgba(255,68,68,.14)}
 .set-status{margin-top:10px;font-size:13px;padding:10px 13px;border-radius:8px;display:none;line-height:1.4}
 .set-status.ok{display:block;background:rgba(30,215,96,.09);border:1px solid rgba(30,215,96,.22);color:var(--green)}
 .set-status.err{display:block;background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
-.modal-sep{height:1px;background:var(--bs);margin:20px 0}
-
-/* How-to steps */
-.steps{display:flex;flex-direction:column;gap:10px}
-.step{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--t3);line-height:1.55}
-.step-n{width:22px;height:22px;border-radius:50%;background:var(--s2);border:1px solid var(--b);font-size:11px;font-weight:700;font-family:var(--dis);color:var(--t2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.modal-sep{height:1px;background:var(--bs);margin:18px 0}
+.steps{display:flex;flex-direction:column;gap:12px}
+.step{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--t3);line-height:1.6}
+.step-n{width:24px;height:24px;border-radius:50%;background:var(--s2);border:1px solid var(--b);font-size:11px;font-weight:700;font-family:var(--dis);color:var(--t2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .step strong{color:var(--t2)}
-.step code{font-family:var(--mono);font-size:12px;background:var(--s2);padding:1px 6px;border-radius:4px;color:var(--amber)}
+.step code{font-family:var(--mono);font-size:11px;background:var(--s2);padding:2px 6px;border-radius:4px;color:var(--amber)}
 
-/* ── APP SHELL ── */
+/* ── LAYOUT SHELL ── */
 .shell{display:flex;height:100vh;overflow:hidden}
 
-/* Sidebar */
+/* Sidebar (desktop) */
 .sidebar{width:var(--sw);flex-shrink:0;height:100%;background:#000;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--bs)}
 .sb-brand{display:flex;align-items:center;gap:10px;padding:22px 16px 18px;font-family:var(--dis);font-size:17px;font-weight:700;letter-spacing:-.02em;transition:opacity .15s}
 .sb-brand:hover{opacity:.8}
@@ -94,105 +93,143 @@ input,button{-webkit-tap-highlight-color:transparent;outline:none}
 .nav-row svg{width:17px;height:17px;flex-shrink:0}
 .nav-row.active{color:var(--t1)}
 .nav-row.active .np{stroke:var(--green)}
-.nav-row.btn{cursor:pointer}.nav-row.btn:hover{background:var(--s1);color:var(--t1)}
+.nav-row.btn{cursor:pointer}
+.nav-row.btn:hover{background:var(--s1);color:var(--t1)}
 .sb-sep{height:1px;background:var(--bs);margin:12px 14px}
 .sb-lib{flex:1;overflow:hidden;display:flex;flex-direction:column}
 .sb-lib-hdr{display:flex;align-items:center;gap:8px;padding:6px 16px 8px;font-size:12px;font-weight:600;color:var(--t3);font-family:var(--dis);letter-spacing:.04em}
 .sb-lib-hdr svg{width:14px;height:14px}
 .sb-lib-scroll{flex:1;overflow-y:auto;padding:0 6px 20px}
-.sb-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;text-decoration:none;color:inherit;transition:background .12s}
+.sb-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;text-decoration:none;color:inherit;transition:background .12s;min-height:52px}
 .sb-item:hover{background:var(--s1)}
-.sb-thumb{width:36px;height:36px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--dis);font-size:14px;font-weight:800;color:rgba(0,0,0,.4)}
+.sb-thumb{width:38px;height:38px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--dis);font-size:15px;font-weight:800;color:rgba(0,0,0,.4)}
 .sb-info{min-width:0}
 .sb-song{font-size:13px;font-weight:500;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sb-artist{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 
-/* Main area */
-.main{flex:1;overflow-y:auto;background:var(--bg);display:flex;flex-direction:column}
-.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;padding:12px 22px;background:rgba(14,14,14,.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--bs)}
-.search-wrap{flex:1;position:relative;max-width:380px}
-.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--t3);pointer-events:none}
-#search{width:100%;background:var(--s2);border:1px solid transparent;border-radius:99px;padding:9px 16px 9px 36px;color:var(--t1);font-family:var(--ui);font-size:14px;transition:all .18s}
+/* Main */
+.main{flex:1;overflow-y:auto;background:var(--bg);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch}
+
+/* Topbar */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 20px;background:rgba(14,14,14,.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--bs)}
+.search-wrap{flex:1;position:relative}
+.search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--t3);pointer-events:none}
+#search{width:100%;background:var(--s2);border:1px solid transparent;border-radius:99px;padding:10px 16px 10px 38px;color:var(--t1);font-family:var(--ui);font-size:16px;-webkit-appearance:none;transition:all .18s}
 #search::placeholder{color:var(--t3)}
-#search:focus{background:var(--s3);border-color:rgba(255,255,255,.14);box-shadow:0 0 0 3px rgba(255,255,255,.04)}
-.topbar-end{margin-left:auto;display:flex;align-items:center;gap:8px}
-#count-label{font-size:13px;color:var(--t3);font-family:var(--dis);font-weight:500}
+#search:focus{background:var(--s3);border-color:rgba(255,255,255,.14)}
+.topbar-end{display:flex;align-items:center;gap:8px;flex-shrink:0}
+#count-label{font-size:13px;color:var(--t3);font-family:var(--dis);white-space:nowrap}
 #count-label span{color:var(--t2)}
-.icon-btn{width:34px;height:34px;border-radius:50%;background:var(--s1);border:1px solid var(--bs);display:flex;align-items:center;justify-content:center;color:var(--t3);transition:all .15s}
+.icon-btn{width:40px;height:40px;border-radius:50%;background:var(--s1);border:1px solid var(--bs);display:flex;align-items:center;justify-content:center;color:var(--t3);transition:all .15s;flex-shrink:0}
 .icon-btn:hover{background:var(--s2);color:var(--t1);border-color:var(--b)}
-.icon-btn svg{width:15px;height:15px}
+.icon-btn:active{transform:scale(.93)}
+.icon-btn svg{width:16px;height:16px}
 
 /* Error */
-#err{margin:12px 22px 0;padding:12px 16px;background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.18);border-radius:10px;color:var(--red);font-size:13px;line-height:1.55;display:none}
+#err{margin:12px 16px 0;padding:12px 16px;background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.18);border-radius:10px;color:var(--red);font-size:13px;line-height:1.55;display:none}
 #err a{color:var(--amber);text-decoration:underline;cursor:pointer}
 
 /* Hero */
-.hero{padding:44px 26px 30px;position:relative;overflow:hidden;background:linear-gradient(150deg,rgba(30,215,96,.07),transparent 55%)}
-.hero::before{content:'';position:absolute;top:-80px;right:-50px;width:300px;height:300px;background:radial-gradient(circle,rgba(30,215,96,.07),transparent 70%);pointer-events:none}
-.hero-eyebrow{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green);margin-bottom:12px;font-family:var(--dis)}
+.hero{padding:36px 20px 28px;position:relative;overflow:hidden;background:linear-gradient(150deg,rgba(30,215,96,.07),transparent 60%)}
+.hero::before{content:'';position:absolute;top:-80px;right:-50px;width:280px;height:280px;background:radial-gradient(circle,rgba(30,215,96,.07),transparent 70%);pointer-events:none}
+.hero-eyebrow{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green);margin-bottom:10px;font-family:var(--dis)}
 .eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:dot-blink 2s ease-in-out infinite}
 @keyframes dot-blink{0%,100%{opacity:1}50%{opacity:.35}}
-.hero h1{font-family:var(--dis);font-size:clamp(28px,3.8vw,50px);font-weight:800;letter-spacing:-.04em;line-height:1.07;margin-bottom:8px}
-.hero p{font-size:14px;color:var(--t3);max-width:360px;line-height:1.6}
+.hero h1{font-family:var(--dis);font-size:clamp(26px,5vw,50px);font-weight:800;letter-spacing:-.04em;line-height:1.08;margin-bottom:7px}
+.hero p{font-size:14px;color:var(--t3);line-height:1.6}
 
-/* Section header */
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 14px}
-.sec-title{font-family:var(--dis);font-size:20px;font-weight:700;letter-spacing:-.02em}
+/* Section */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 12px}
+.sec-title{font-family:var(--dis);font-size:19px;font-weight:700;letter-spacing:-.02em}
 .sec-count{font-size:13px;color:var(--t3);font-family:var(--dis)}
 
-/* Song grid */
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:6px;padding:0 20px 60px}
-.card{background:var(--bg3);border-radius:12px;padding:14px;cursor:pointer;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:13px;transition:background .2s var(--ease);animation:card-in .32s var(--ease) both}
+/* Grid */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;padding:0 14px 80px}
+
+/* Card */
+.card{background:var(--bg3);border-radius:12px;padding:14px;cursor:pointer;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:12px;transition:background .2s var(--ease);animation:card-in .3s var(--ease) both;-webkit-tap-highlight-color:transparent}
 .card:hover{background:var(--bg4)}
+.card:active{transform:scale(.97)}
 .card:hover .card-play{opacity:1;transform:translateY(0) scale(1)}
 @keyframes card-in{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
 .card:nth-child(1){animation-delay:.02s}.card:nth-child(2){animation-delay:.04s}.card:nth-child(3){animation-delay:.06s}
-.card:nth-child(4){animation-delay:.08s}.card:nth-child(5){animation-delay:.10s}.card:nth-child(6){animation-delay:.12s}
-.card:nth-child(7){animation-delay:.14s}.card:nth-child(8){animation-delay:.16s}.card:nth-child(n+9){animation-delay:.18s}
+.card:nth-child(4){animation-delay:.08s}.card:nth-child(5){animation-delay:.10s}.card:nth-child(n+6){animation-delay:.12s}
 .card-art{width:100%;aspect-ratio:1;border-radius:8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(0,0,0,.5)}
-.card-ltr{font-family:var(--dis);font-size:58px;font-weight:800;color:rgba(0,0,0,.26);user-select:none;line-height:1}
-.card-play{position:absolute;bottom:9px;right:9px;width:44px;height:44px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#000;opacity:0;transform:translateY(10px) scale(.82);transition:opacity .22s var(--ease),transform .22s var(--spring),box-shadow .22s;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.card-ltr{font-family:var(--dis);font-size:54px;font-weight:800;color:rgba(0,0,0,.25);user-select:none;line-height:1}
+.card-play{position:absolute;bottom:9px;right:9px;width:44px;height:44px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#000;opacity:0;transform:translateY(10px) scale(.82);transition:opacity .2s var(--ease),transform .2s var(--spring);box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .card-play svg{width:18px;height:18px;margin-left:2px}
-.card-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.card-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
 .card-foot{display:flex;align-items:center;gap:6px}
 .card-artist{font-size:12px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
 .card-key{font-size:10px;font-family:var(--mono);background:var(--ad);color:var(--amber);padding:2px 7px;border-radius:4px;border:1px solid rgba(245,158,11,.2);flex-shrink:0}
 
-/* No-api + empty states */
-.empty-box{grid-column:1/-1;padding:70px 20px;text-align:center}
-.empty-icon{font-size:44px;display:block;margin:0 auto 18px}
+/* Empty states */
+.empty-box{grid-column:1/-1;padding:60px 20px;text-align:center}
+.empty-icon{font-size:48px;display:block;margin:0 auto 16px}
 .empty-box h3{font-family:var(--dis);font-size:20px;font-weight:700;margin-bottom:8px}
-.empty-box p{font-size:14px;color:var(--t3);max-width:320px;margin:0 auto 20px;line-height:1.6}
-.cta-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;background:var(--green);border-radius:99px;color:#000;font-size:14px;font-weight:700;font-family:var(--dis);cursor:pointer;border:none;transition:all .15s}
-.cta-btn:hover{background:#24e76a;transform:translateY(-1px);box-shadow:0 8px 22px var(--gg)}
-.cta-btn svg{width:15px;height:15px}
+.empty-box p{font-size:14px;color:var(--t3);max-width:300px;margin:0 auto 20px;line-height:1.6}
+.cta-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;background:var(--green);border-radius:99px;color:#000;font-size:14px;font-weight:700;font-family:var(--dis);cursor:pointer;border:none;min-height:50px}
+.cta-btn:active{transform:scale(.96)}
+.cta-btn svg{width:16px;height:16px}
 
-/* Responsive */
-@media(max-width:860px){:root{--sw:200px}}
-@media(max-width:680px){
-  .sidebar{display:none}.shell{height:auto;overflow:visible}.main{overflow:visible;height:auto}
-  #grid{grid-template-columns:repeat(2,1fr);padding:0 12px 60px}
-  .topbar{padding:10px 14px}.hero{padding:30px 14px 24px}.sec-hdr{padding:18px 14px 12px}
+/* ── MOBILE BOTTOM NAV ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(8,8,8,.97);border-top:1px solid var(--b);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.bnav-inner{display:flex;align-items:center;justify-content:space-around;height:var(--bnav);padding-bottom:env(safe-area-inset-bottom)}
+.bnav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 20px;color:var(--t3);font-size:10px;font-weight:600;font-family:var(--dis);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:none;background:none;transition:color .15s;min-height:50px;justify-content:center}
+.bnav-btn svg{width:22px;height:22px}
+.bnav-btn.active{color:var(--green)}
+.bnav-btn.active .np{stroke:var(--green)}
+
+/* ── RESPONSIVE ── */
+@media(min-width:1200px){
+  :root{--sw:260px}
+  #grid{grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;padding:0 24px 80px}
+  .topbar{padding:12px 28px}
+  .hero{padding:52px 32px 38px}
+  .sec-hdr{padding:24px 28px 16px}
+  #search{font-size:14px}
+}
+@media(max-width:860px){
+  :root{--sw:200px}
+  #count-label{display:none}
+}
+@media(max-width:640px){
+  .sidebar{display:none}
+  .shell{height:auto;overflow:visible;flex-direction:column}
+  .main{overflow:visible;height:auto;min-height:100vh}
+  .bottom-nav{display:block}
+  .topbar{padding:8px 12px;gap:8px}
+  .search-wrap{max-width:none;flex:1}
+  .hero{padding:26px 16px 20px}
+  .sec-hdr{padding:16px 16px 10px}
+  .sec-title{font-size:17px}
+  #grid{grid-template-columns:repeat(2,1fr);gap:8px;padding:0 10px 100px}
+  /* always show play icon on touch — no hover */
+  .card-play{opacity:1;transform:translateY(0) scale(1)}
+  #err{margin:10px 12px 0}
+}
+@media(max-width:380px){
+  #grid{gap:6px;padding:0 8px 100px}
+  .card{padding:11px;gap:10px}
+  .card-ltr{font-size:42px}
 }
 </style>
 </head>
 <body>
 
-<!-- Loading screen -->
+<!-- Loading -->
 <div id="ld">
   <div class="ld-inner">
     <div class="ld-icon">🎸</div>
-    <div class="ld-bars">
-      <div class="ld-bar"></div><div class="ld-bar"></div><div class="ld-bar"></div>
-      <div class="ld-bar"></div><div class="ld-bar"></div>
-    </div>
+    <div class="ld-bars"><div class="ld-bar"></div><div class="ld-bar"></div><div class="ld-bar"></div><div class="ld-bar"></div><div class="ld-bar"></div></div>
     <p class="ld-text">Chord Stage</p>
   </div>
 </div>
 
 <!-- Settings Modal -->
 <div class="overlay" id="settings-overlay">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="modal">
+    <div class="modal-drag"></div>
     <div class="modal-head">
       <div class="modal-title">⚙️ Settings</div>
       <button class="modal-x" id="close-modal" aria-label="Close">
@@ -200,87 +237,44 @@ input,button{-webkit-tap-highlight-color:transparent;outline:none}
       </button>
     </div>
     <div class="modal-body">
-
-      <!-- API URL input -->
-      <div class="set-section">
-        <label class="set-label" for="api-input">Google Apps Script URL</label>
-        <p class="set-desc">Paste your Web App URL here. This connects Chord Stage to your Google Sheet song library. The URL is saved in your browser — no code editing needed.</p>
-        <input class="set-input" id="api-input" type="url" placeholder="https://script.google.com/macros/s/…/exec" spellcheck="false" autocomplete="off"/>
-        <div class="set-btns">
-          <button class="btn-primary" id="btn-save">💾 Save &amp; Load</button>
-          <button class="btn-secondary" id="btn-test">🔍 Test</button>
-          <button class="btn-danger" id="btn-clear">✕ Clear</button>
-        </div>
-        <div class="set-status" id="set-status"></div>
+      <label class="set-label" for="api-input">Google Apps Script URL</label>
+      <p class="set-desc">Paste your Web App URL here. Connects Chord Stage to your Google Sheets library. Saved in your browser — no code editing needed.</p>
+      <input class="set-input" id="api-input" type="url" placeholder="https://script.google.com/macros/s/…/exec" spellcheck="false" autocomplete="off" inputmode="url"/>
+      <div class="set-btns">
+        <button class="btn-primary" id="btn-save">💾 Save &amp; Load</button>
+        <button class="btn-secondary" id="btn-test">🔍 Test</button>
+        <button class="btn-danger" id="btn-clear">✕</button>
       </div>
-
+      <div class="set-status" id="set-status"></div>
       <div class="modal-sep"></div>
-
-      <!-- How-to guide -->
-      <div class="set-section">
-        <label class="set-label">How to get your API URL</label>
-        <div class="steps">
-          <div class="step">
-            <div class="step-n">1</div>
-            <div>Open <strong>Google Sheets</strong> with your songs. Columns must be: <code>ID</code> <code>Title</code> <code>Artist</code> <code>Key</code> <code>Capo</code> <code>Content</code></div>
-          </div>
-          <div class="step">
-            <div class="step-n">2</div>
-            <div>In Sheets go to <strong>Extensions → Apps Script</strong>. Paste this code and save:
-              <br><br>
-              <code style="display:block;margin-top:4px;padding:8px 10px;background:var(--s2);border-radius:6px;font-size:11px;line-height:1.7;border:1px solid var(--b)">
-                function doGet(){<br>
-                &nbsp;&nbsp;var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();<br>
-                &nbsp;&nbsp;var rows = sheet.getDataRange().getValues();<br>
-                &nbsp;&nbsp;var headers = rows[0];<br>
-                &nbsp;&nbsp;var data = rows.slice(1).map(r => Object.fromEntries(headers.map((h,i)=>[h,r[i]])));<br>
-                &nbsp;&nbsp;return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);<br>
-                }
-              </code>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-n">3</div>
-            <div>Click <strong>Deploy → New deployment</strong>. Type: <code>Web app</code>. Set <strong>Execute as: Me</strong> and <strong>Who has access: Anyone</strong>. Click Deploy and copy the URL.</div>
-          </div>
-          <div class="step">
-            <div class="step-n">4</div>
-            <div>Paste that URL in the field above and click <strong>Save &amp; Load</strong>.</div>
-          </div>
-        </div>
+      <label class="set-label">Setup Guide</label>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><div>Open <strong>Google Sheets</strong>. First row: <code>ID</code> <code>Title</code> <code>Artist</code> <code>Key</code> <code>Capo</code> <code>Content</code></div></div>
+        <div class="step"><div class="step-n">2</div><div>Go to <strong>Extensions → Apps Script</strong>, paste the API code and save.</div></div>
+        <div class="step"><div class="step-n">3</div><div>Click <strong>Deploy → New deployment</strong>. Type: Web app. Access: <strong>Anyone</strong>. Copy the URL.</div></div>
+        <div class="step"><div class="step-n">4</div><div>Paste the URL above and tap <strong>Save &amp; Load</strong>.</div></div>
       </div>
-
     </div>
   </div>
 </div>
 
 <!-- App Shell -->
 <div class="shell">
-
-  <!-- Sidebar -->
+  <!-- Sidebar (desktop) -->
   <aside class="sidebar">
-    <a href="index.html" class="sb-brand">
-      <div class="sb-mark">🎸</div>Chord Stage
-    </a>
+    <a href="index.html" class="sb-brand"><div class="sb-mark">🎸</div>Chord Stage</a>
     <nav class="sb-nav">
       <div class="nav-row active">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path class="np" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/>
-        </svg>
-        Library
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path class="np" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>Library
       </div>
       <div class="nav-row btn" id="sb-settings">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M16.24 7.76a6 6 0 0 1 0 8.49M4.93 4.93a10 10 0 0 0 0 14.14M7.76 7.76a6 6 0 0 0 0 8.49"/>
-        </svg>
-        Settings
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Settings
       </div>
     </nav>
     <div class="sb-sep"></div>
     <div class="sb-lib">
       <div class="sb-lib-hdr">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19V6l12-3v13M9 19c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm12-3c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"/></svg>
-        Your Library
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19V6l12-3v13M9 19c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm12-3c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"/></svg>Your Library
       </div>
       <div class="sb-lib-scroll" id="sb-list"></div>
     </div>
@@ -291,11 +285,11 @@ input,button{-webkit-tap-highlight-color:transparent;outline:none}
     <div class="topbar">
       <div class="search-wrap">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="search" id="search" placeholder="Search songs or artists… (press /)" autocomplete="off" spellcheck="false"/>
+        <input type="search" id="search" placeholder="Search songs or artists…" autocomplete="off" spellcheck="false"/>
       </div>
       <div class="topbar-end">
         <span id="count-label"></span>
-        <button class="icon-btn" id="top-settings" title="Settings (API URL)">
+        <button class="icon-btn" id="top-settings" title="Settings">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
         </button>
       </div>
@@ -306,7 +300,7 @@ input,button{-webkit-tap-highlight-color:transparent;outline:none}
     <div class="hero">
       <div class="hero-eyebrow"><span class="eyebrow-dot"></span>Your Collection</div>
       <h1>Song Library</h1>
-      <p>Every chord sheet you need — beautifully presented for stage and studio.</p>
+      <p>Every chord sheet, beautifully presented for stage &amp; studio.</p>
     </div>
 
     <div class="sec-hdr">
@@ -316,205 +310,118 @@ input,button{-webkit-tap-highlight-color:transparent;outline:none}
 
     <div id="grid"></div>
   </main>
+</div>
 
-</div><!-- /shell -->
+<!-- Mobile Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="bnav-inner">
+    <button class="bnav-btn active" id="bnav-home">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path class="np" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Library
+    </button>
+    <button class="bnav-btn" id="bnav-search">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Search
+    </button>
+    <button class="bnav-btn" id="bnav-settings">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Settings
+    </button>
+  </div>
+</nav>
 
 <script>
-/* ══════════════════════════════════════════
-   CHORD STAGE  ·  index.html
-   ══════════════════════════════════════════ */
-
-const KEY = 'cs_api_url';
-const PALETTES = [
-  ['#1a6b3a','#0d4a28'],['#7c3aed','#4c1d95'],['#dc2626','#7f1d1d'],
-  ['#0369a1','#0c4a6e'],['#d97706','#78350f'],['#0891b2','#164e63'],
-  ['#be185d','#500724'],['#4f46e5','#1e1b4b'],['#16a34a','#052e16'],
-  ['#b45309','#451a03'],['#7e22ce','#3b0764'],['#0f766e','#042f2e'],
-  ['#b91c1c','#450a0a'],['#1d4ed8','#1e3a8a'],['#a16207','#431407'],
-  ['#9d174d','#500724']
-];
-
-let songs = [];
-
-/* ─ utils ─ */
+const KEY='cs_api_url';
+const PALETTES=[['#1a6b3a','#0d4a28'],['#7c3aed','#4c1d95'],['#dc2626','#7f1d1d'],['#0369a1','#0c4a6e'],['#d97706','#78350f'],['#0891b2','#164e63'],['#be185d','#500724'],['#4f46e5','#1e1b4b'],['#16a34a','#052e16'],['#b45309','#451a03'],['#7e22ce','#3b0764'],['#0f766e','#042f2e'],['#b91c1c','#450a0a'],['#1d4ed8','#1e3a8a'],['#a16207','#431407'],['#9d174d','#500724']];
+let songs=[];
 function pal(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return PALETTES[Math.abs(h)%PALETTES.length]}
 function ltr(t){return(t||'?').trim()[0].toUpperCase()}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function apiUrl(){return localStorage.getItem(KEY)||''}
 function saveUrl(u){localStorage.setItem(KEY,u)}
 function clearUrl(){localStorage.removeItem(KEY)}
-
-/* ─ DOM refs ─ */
-const $ld     = document.getElementById('ld');
-const $grid   = document.getElementById('grid');
-const $sbList = document.getElementById('sb-list');
-const $search = document.getElementById('search');
-const $count  = document.getElementById('count-label');
-const $scnt   = document.getElementById('sec-count');
-const $err    = document.getElementById('err');
-const $overlay= document.getElementById('settings-overlay');
-const $apiIn  = document.getElementById('api-input');
-const $status = document.getElementById('set-status');
-
-/* ─ loading ─ */
-function hideLoading(){$ld.classList.add('gone')}
-
-/* ─ error ─ */
-function showErr(msg){$err.innerHTML=msg;$err.style.display='block'}
-function hideErr(){$err.style.display='none';$err.innerHTML=''}
-
-/* ─ settings modal ─ */
-function openSettings(){
-  $apiIn.value = apiUrl();
-  $status.className = 'set-status';
-  $overlay.classList.add('open');
-  setTimeout(()=>$apiIn.focus(),120);
-}
+const $grid=document.getElementById('grid');
+const $sbList=document.getElementById('sb-list');
+const $search=document.getElementById('search');
+const $count=document.getElementById('count-label');
+const $scnt=document.getElementById('sec-count');
+const $err=document.getElementById('err');
+const $overlay=document.getElementById('settings-overlay');
+const $apiIn=document.getElementById('api-input');
+const $status=document.getElementById('set-status');
+function hideLoading(){document.getElementById('ld').classList.add('gone')}
+function showErr(m){$err.innerHTML=m;$err.style.display='block'}
+function openSettings(){$apiIn.value=apiUrl();$status.className='set-status';$overlay.classList.add('open');setTimeout(()=>$apiIn.focus(),200)}
 function closeSettings(){$overlay.classList.remove('open')}
-function setStatus(t,m){$status.textContent=m;$status.className='set-status '+t}
-
-['close-modal','sb-settings','top-settings'].forEach(id=>{
-  const el = document.getElementById(id);
-  if(el) el.addEventListener('click', id==='close-modal' ? closeSettings : openSettings);
+function setSt(t,m){$status.textContent=m;$status.className='set-status '+t}
+document.getElementById('close-modal').addEventListener('click',closeSettings);
+document.getElementById('top-settings').addEventListener('click',openSettings);
+document.getElementById('sb-settings').addEventListener('click',openSettings);
+document.getElementById('bnav-settings').addEventListener('click',openSettings);
+$overlay.addEventListener('click',e=>{if(e.target===$overlay)closeSettings()});
+document.getElementById('btn-save').addEventListener('click',()=>{
+  const u=$apiIn.value.trim();
+  if(!u){setSt('err','Please enter a URL.');return}
+  if(!u.startsWith('https://')){setSt('err','URL must start with https://');return}
+  saveUrl(u);setSt('ok','✓ Saved! Loading songs…');
+  setTimeout(()=>{closeSettings();fetchSongs()},700);
 });
-$overlay.addEventListener('click', e=>{ if(e.target===$overlay) closeSettings() });
-
-document.getElementById('btn-save').addEventListener('click', ()=>{
-  const u = $apiIn.value.trim();
-  if(!u){ setStatus('err','Please enter a URL.'); return }
-  if(!u.startsWith('https://')){ setStatus('err','URL must start with https://'); return }
-  saveUrl(u);
-  setStatus('ok','✓ Saved! Loading your songs…');
-  setTimeout(()=>{ closeSettings(); fetchSongs() }, 700);
+document.getElementById('btn-test').addEventListener('click',async()=>{
+  const u=$apiIn.value.trim();
+  if(!u){setSt('err','Enter a URL first.');return}
+  setSt('ok','Testing…');
+  try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();setSt('ok','✓ Found '+(Array.isArray(d)?d.length:'?')+' songs.');}
+  catch(e){setSt('err','✗ '+e.message)}
 });
-
-document.getElementById('btn-test').addEventListener('click', async ()=>{
-  const u = $apiIn.value.trim();
-  if(!u){ setStatus('err','Enter a URL first.'); return }
-  setStatus('ok','Testing connection…');
-  try{
-    const r = await fetch(u);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const d = await r.json();
-    setStatus('ok','✓ Connected! Found '+(Array.isArray(d)?d.length:'?')+' songs.');
-  } catch(e){ setStatus('err','✗ Failed: '+e.message+'. Make sure "Who has access" is set to Anyone.') }
-});
-
-document.getElementById('btn-clear').addEventListener('click', ()=>{
-  clearUrl(); $apiIn.value='';
-  setStatus('ok','URL cleared.');
-  setTimeout(()=>{ closeSettings(); renderNoApi() }, 500);
-});
-
-/* ─ fetch ─ */
+document.getElementById('btn-clear').addEventListener('click',()=>{clearUrl();$apiIn.value='';setSt('ok','Cleared.');setTimeout(()=>{closeSettings();renderNoApi()},500)});
 async function fetchSongs(){
-  const url = apiUrl();
-  hideErr();
-  if(!url){ renderNoApi(); hideLoading(); return }
+  const url=apiUrl();$err.style.display='none';
+  if(!url){renderNoApi();hideLoading();return}
   try{
-    const r = await fetch(url);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    songs = await r.json();
-    if(!Array.isArray(songs)) songs = [];
-    renderGrid(songs);
-    renderSidebar(songs);
-  } catch(e){
-    showErr('⚠ Could not load songs — <a onclick="openSettings()">check Settings</a>. Error: '+e.message);
-    renderGrid([]);
-  } finally{ hideLoading() }
+    const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);
+    songs=await r.json();if(!Array.isArray(songs))songs=[];
+    renderGrid(songs);renderSidebar(songs);
+  }catch(e){showErr('⚠ Could not load — <a onclick="openSettings()">check Settings</a>. '+e.message);renderGrid([])}
+  finally{hideLoading()}
 }
-
-/* ─ render: no API ─ */
 function renderNoApi(){
-  songs = [];
-  if($count) $count.innerHTML = '';
-  if($scnt)  $scnt.textContent = '';
-  $grid.innerHTML = `
-    <div class="empty-box">
-      <span class="empty-icon">🔗</span>
-      <h3>Connect Your Song Library</h3>
-      <p>Paste your Google Apps Script URL in Settings to load your songs. Takes about 2 minutes to set up.</p>
-      <button class="cta-btn" onclick="openSettings()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-        Open Settings
-      </button>
-    </div>`;
+  songs=[];if($count)$count.innerHTML='';if($scnt)$scnt.textContent='';
+  $grid.innerHTML='<div class="empty-box"><span class="empty-icon">🔗</span><h3>Connect Your Library</h3><p>Paste your Google Apps Script URL in Settings to load songs.</p><button class="cta-btn" onclick="openSettings()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>Open Settings</button></div>';
 }
-
-/* ─ render: song cards ─ */
 function renderGrid(list){
-  $grid.innerHTML = '';
-  const n = list.length;
-  if($count) $count.innerHTML = n ? '<span>'+n+'</span> songs' : '0 songs';
-  if($scnt)  $scnt.textContent = n ? n+' songs' : '';
-  if(!n){
-    $grid.innerHTML = `<div class="empty-box">
-      <span class="empty-icon">🔍</span>
-      <h3>No Results</h3><p>No songs match your search.</p></div>`;
-    return;
-  }
+  $grid.innerHTML='';const n=list.length;
+  if($count)$count.innerHTML=n?'<span>'+n+'</span> songs':'';
+  if($scnt)$scnt.textContent=n?n+' songs':'';
+  if(!n&&apiUrl()){$grid.innerHTML='<div class="empty-box"><span class="empty-icon">🔍</span><h3>No Results</h3><p>Nothing matched your search.</p></div>';return}
   list.forEach(song=>{
-    const a = document.createElement('a');
-    a.className = 'card';
-    a.href = 'song.html?id='+encodeURIComponent(song.ID);
-    const [c1,c2] = pal(song.Title||song.ID||'');
-    const kb = song.Key ? '<span class="card-key">'+esc(song.Key)+'</span>' : '';
-    a.innerHTML = `
-      <div class="card-art" style="background:linear-gradient(145deg,${c1},${c2})">
-        <span class="card-ltr">${esc(ltr(song.Title))}</span>
-        <div class="card-play"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div>
-      </div>
-      <div>
-        <div class="card-title">${esc(song.Title||'Untitled')}</div>
-        <div class="card-foot"><span class="card-artist">${esc(song.Artist||'—')}</span>${kb}</div>
-      </div>`;
+    const a=document.createElement('a');a.className='card';a.href='song.html?id='+encodeURIComponent(song.ID);
+    const[c1,c2]=pal(song.Title||song.ID||'');
+    const kb=song.Key?'<span class="card-key">'+esc(song.Key)+'</span>':'';
+    a.innerHTML='<div class="card-art" style="background:linear-gradient(145deg,'+c1+','+c2+')"><span class="card-ltr">'+esc(ltr(song.Title))+'</span><div class="card-play"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div><div class="card-title">'+esc(song.Title||'Untitled')+'</div><div class="card-foot"><span class="card-artist">'+esc(song.Artist||'—')+'</span>'+kb+'</div></div>';
     $grid.appendChild(a);
   });
 }
-
-/* ─ render: sidebar ─ */
 function renderSidebar(list){
-  if(!$sbList) return;
-  $sbList.innerHTML = '';
+  if(!$sbList)return;$sbList.innerHTML='';
   list.slice(0,40).forEach(song=>{
-    const a = document.createElement('a');
-    a.className = 'sb-item';
-    a.href = 'song.html?id='+encodeURIComponent(song.ID);
-    const [c1,c2] = pal(song.Title||song.ID||'');
-    a.innerHTML = `
-      <div class="sb-thumb" style="background:linear-gradient(145deg,${c1},${c2})">${esc(ltr(song.Title))}</div>
-      <div class="sb-info">
-        <div class="sb-song">${esc(song.Title||'Untitled')}</div>
-        <div class="sb-artist">${esc(song.Artist||'')}</div>
-      </div>`;
+    const a=document.createElement('a');a.className='sb-item';a.href='song.html?id='+encodeURIComponent(song.ID);
+    const[c1,c2]=pal(song.Title||song.ID||'');
+    a.innerHTML='<div class="sb-thumb" style="background:linear-gradient(145deg,'+c1+','+c2+')">'+esc(ltr(song.Title))+'</div><div class="sb-info"><div class="sb-song">'+esc(song.Title||'Untitled')+'</div><div class="sb-artist">'+esc(song.Artist||'')+'</div></div>';
     $sbList.appendChild(a);
   });
 }
-
-/* ─ search ─ */
-$search.addEventListener('input', e=>{
-  if(!songs.length) return;
-  const q = e.target.value.toLowerCase().trim();
-  renderGrid(q ? songs.filter(s=>(s.Title||'').toLowerCase().includes(q)||(s.Artist||'').toLowerCase().includes(q)) : songs);
+$search.addEventListener('input',e=>{
+  if(!songs.length)return;
+  const q=e.target.value.toLowerCase().trim();
+  renderGrid(q?songs.filter(s=>(s.Title||'').toLowerCase().includes(q)||(s.Artist||'').toLowerCase().includes(q)):songs);
 });
-
-/* ─ keyboard shortcuts ─ */
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){ closeSettings(); return }
-  if(e.key==='/' && !$overlay.classList.contains('open') && document.activeElement !== $search){
-    e.preventDefault(); $search.focus();
-  }
+document.getElementById('bnav-search').addEventListener('click',()=>{ $search.focus(); window.scrollTo({top:0,behavior:'smooth'}); });
+document.getElementById('bnav-home').addEventListener('click',()=>{ window.scrollTo({top:0,behavior:'smooth'}); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeSettings();return}
+  if(e.key==='/'&&!$overlay.classList.contains('open')&&document.activeElement!==$search){e.preventDefault();$search.focus()}
 });
-
-/* ─ boot ─ */
-if(apiUrl()){
-  fetchSongs();
-} else {
-  renderNoApi();
-  hideLoading();
-  // Auto-open settings on first visit
-  setTimeout(openSettings, 400);
-}
+if(apiUrl()){fetchSongs()}else{renderNoApi();hideLoading();setTimeout(openSettings,400)}
 </script>
 </body>
 </html>
