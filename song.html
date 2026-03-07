@@ -5,808 +5,1131 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
-<meta name="theme-color" content="#0e0e0e"/>
+<meta name="theme-color" content="#111111"/>
 <title>Song — Chord Stage</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231ed760'/><polygon points='11,8 25,16 11,24' fill='%23000'/></svg>"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════ TOKENS ═══════════════ */
-:root{
-  --bg:#0e0e0e;--bg3:#181818;--bg4:#222;--bg5:#2a2a2a;
-  --s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.07);--s3:rgba(255,255,255,.13);
-  --b:rgba(255,255,255,.08);--bs:rgba(255,255,255,.04);
-  --t1:#fff;--t2:#b3b3b3;--t3:#717171;--t4:#3a3a3a;
-  --green:#1ed760;--gd:rgba(30,215,96,.12);--gg:rgba(30,215,96,.3);
-  --amber:#f59e0b;--ad:rgba(245,158,11,.13);--red:#ff4444;
-  /* Player bar height — keeps lyrics from going under it */
-  --pb-h:130px;
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bot:env(safe-area-inset-bottom,0px);
-  --ui:'Figtree',sans-serif;--dis:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
-  --spring:cubic-bezier(.34,1.56,.64,1);
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-text-size-adjust:100%;background:var(--bg)}
-body{font-family:var(--ui);background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-a{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
-button{cursor:pointer;font-family:var(--ui);background:none;border:none;color:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-input{-webkit-tap-highlight-color:transparent;outline:none;font-family:var(--ui)}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#333;border-radius:99px}
+/* ─────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────── */
+:root {
+  --bg:       #111111;
+  --surface:  #1a1a1a;
+  --raised:   #222222;
+  --border:   rgba(255,255,255,.09);
+  --border2:  rgba(255,255,255,.05);
 
-/* ═══════════════ LOADING ═══════════════ */
-#ld{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9000;transition:opacity .5s,visibility .5s}
-#ld.gone{opacity:0;visibility:hidden;pointer-events:none}
-.ld-inner{display:flex;flex-direction:column;align-items:center;gap:22px}
-.ld-icon{width:64px;height:64px;background:var(--green);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;animation:ldp 1.6s ease-in-out infinite}
-@keyframes ldp{0%,100%{box-shadow:0 0 0 0 var(--gg)}50%{box-shadow:0 0 0 14px transparent,0 0 44px var(--gd)}}
-.ld-bars{display:flex;align-items:flex-end;gap:4px;height:26px}
-.ld-bar{width:4px;background:var(--green);border-radius:99px;animation:ldb .8s ease-in-out infinite}
-.ld-bar:nth-child(1){height:8px;animation-delay:0s}.ld-bar:nth-child(2){height:14px;animation-delay:.12s}
-.ld-bar:nth-child(3){height:20px;animation-delay:.24s}.ld-bar:nth-child(4){height:14px;animation-delay:.36s}
-.ld-bar:nth-child(5){height:8px;animation-delay:.48s}
-@keyframes ldb{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
-.ld-label{font-family:var(--dis);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--t3)}
+  --text-1:   #f0f0f0;
+  --text-2:   #909090;
+  --text-3:   #555555;
 
-/* ═══════════════ SETTINGS MODAL ═══════════════ */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:5000;display:none;align-items:flex-end;justify-content:center}
-.overlay.open{display:flex}
-.sheet{width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:24px 24px 0 0;max-height:92vh;display:flex;flex-direction:column;animation:sheetup .26s var(--spring)}
-@keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sheet-drag{width:38px;height:4px;background:var(--s3);border-radius:99px;margin:10px auto 0;flex-shrink:0}
-.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 0;flex-shrink:0}
-.sheet-title{font-family:var(--dis);font-size:18px;font-weight:800;letter-spacing:-.02em}
-.sheet-body{padding:16px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:max(20px,var(--safe-bot))}
-.modal-x{width:34px;height:34px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--t3);flex-shrink:0}
-.modal-x:active{background:var(--s3);color:var(--t1)}
-.modal-x svg{width:15px;height:15px}
-.field-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;display:block;font-family:var(--dis)}
-.field-desc{font-size:13px;color:var(--t4);line-height:1.5;margin-bottom:9px}
-.field-input{width:100%;background:var(--bg4);border:1px solid var(--b);border-radius:10px;padding:14px;color:var(--t1);font-size:16px;-webkit-appearance:none;transition:border-color .18s}
-.field-input::placeholder{color:var(--t4)}
-.field-input:focus{border-color:var(--green)}
-.field-status{margin-top:9px;font-size:13px;padding:10px 13px;border-radius:8px;display:none;line-height:1.4}
-.field-status.ok{display:block;background:rgba(30,215,96,.09);border:1px solid rgba(30,215,96,.22);color:var(--green)}
-.field-status.err{display:block;background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
-.btn-row{display:flex;gap:8px;margin-top:10px}
-.btn-g{flex:1;padding:14px;background:var(--green);border-radius:10px;color:#000;font-size:14px;font-weight:700;font-family:var(--dis);min-height:50px}
-.btn-g:active{opacity:.8;transform:scale(.97)}
-.btn-b{padding:14px 16px;background:var(--s2);border:1px solid var(--b);border-radius:10px;color:var(--t2);font-size:13px;font-weight:600;font-family:var(--dis);min-height:50px}
-.btn-b:active{background:var(--s3)}
-.btn-r{padding:14px;background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.18);border-radius:10px;color:var(--red);font-size:13px;font-weight:600;font-family:var(--dis);min-height:50px}
-.sep{height:1px;background:var(--bs);margin:16px 0}
-.keys-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.key-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t3)}
-.key-badge{font-family:var(--mono);font-size:11px;background:var(--s2);border:1px solid var(--b);padding:3px 8px;border-radius:5px;color:var(--t2);flex-shrink:0}
+  --green:    #1ed760;
+  --green-dim:rgba(30,215,96,.15);
+  --green-glow:rgba(30,215,96,.35);
+  --chord:    #f0b429;    /* warm amber — chords */
+  --chord-dim:rgba(240,180,41,.12);
+  --red:      #f04444;
 
-/* ═══════════════ PAGE WRAPPER ═══════════════ */
-/* Full-page, padding-bottom = player bar height so lyrics are never hidden */
-.page{
-  min-height:100vh;
-  /* Bottom padding = player bar + safe area, always */
-  padding-bottom:calc(var(--pb-h) + var(--safe-bot) + 16px);
+  --safe-t:   env(safe-area-inset-top, 0px);
+  --safe-b:   env(safe-area-inset-bottom, 0px);
+
+  /* Player bar height — page always padded this much at bottom */
+  --bar-h:    160px;
+
+  --ui: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --ease: cubic-bezier(.4,0,.2,1);
+  --spring: cubic-bezier(.34,1.56,.64,1);
 }
 
-/* ═══════════════ TOPBAR — notch-safe ═══════════════ */
-.topbar{
-  position:sticky;
-  top:0;
-  z-index:200;
-  background:rgba(12,12,12,.95);
-  backdrop-filter:blur(28px);
-  -webkit-backdrop-filter:blur(28px);
-  border-bottom:1px solid var(--bs);
-  /* Safe area pushes the bar down below notch */
-  padding-top:var(--safe-top);
+/* ─────────────────────────────────────────
+   RESET
+───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+html { -webkit-text-size-adjust: 100%; background: var(--bg) }
+body {
+  font-family: var(--ui);
+  background: var(--bg);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none; /* prevents bounce fighting with auto-scroll */
 }
-.topbar-inner{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 16px;
-  gap:10px;
+a    { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent }
+button {
+  font-family: var(--ui);
+  background: none; border: none; color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
-.tb-left{display:flex;align-items:center;gap:10px;min-width:0}
-.tb-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
-.btn-back{width:36px;height:36px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--t2);text-decoration:none;flex-shrink:0}
-.btn-back:active{background:var(--s3);transform:scale(.92)}
-.btn-back svg{width:20px;height:20px}
-.tb-brand{display:flex;align-items:center;gap:8px;font-family:var(--dis);font-size:15px;font-weight:800;letter-spacing:-.03em;min-width:0}
-.tb-dot{width:28px;height:28px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.tb-brand span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--s1);border:1px solid var(--bs);display:flex;align-items:center;justify-content:center;color:var(--t3);transition:all .15s;flex-shrink:0}
-.icon-btn:active{transform:scale(.92);background:var(--s2)}
-.icon-btn svg{width:15px;height:15px}
+input { font-family: var(--ui); outline: none; -webkit-tap-highlight-color: transparent }
+::-webkit-scrollbar { width: 3px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 99px }
 
-/* ═══════════════ HERO ═══════════════ */
-.hero{position:relative;padding:28px 18px 24px;overflow:hidden}
-.hero-grad{position:absolute;inset:0;transition:background 1.2s}
-.hero-grad::after{content:'';position:absolute;bottom:0;left:0;right:0;height:90px;background:linear-gradient(to bottom,transparent,var(--bg))}
-.hero-inner{position:relative;z-index:1;display:flex;align-items:flex-end;gap:18px}
-.hero-art{width:130px;height:130px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--dis);font-size:56px;font-weight:800;color:rgba(0,0,0,.22);box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04)}
-.hero-info{min-width:0;padding-bottom:4px}
-.hero-type{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:7px;font-family:var(--dis)}
-.hero-title{font-family:var(--dis);font-size:clamp(18px,4.5vw,44px);font-weight:800;letter-spacing:-.04em;line-height:1.07;margin-bottom:10px;word-break:break-word}
-.hero-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.hero-artist{font-size:14px;font-weight:500;color:rgba(255,255,255,.8)}
-.mdot{color:var(--t3)}
-.badge{font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:5px;border:1px solid}
-.b-key{background:var(--ad);border-color:rgba(245,158,11,.25);color:var(--amber)}
-.b-capo{background:var(--s1);border-color:var(--b);color:var(--t3)}
-.b-tp{background:var(--s1);border-color:var(--b);color:var(--t3);transition:all .22s}
-.b-tp.on{background:var(--ad);border-color:rgba(245,158,11,.25);color:var(--amber)}
-
-/* Setlist nav strip */
-.sl-nav{display:none;align-items:center;gap:8px;padding:10px 18px;background:rgba(30,215,96,.07);border-bottom:1px solid rgba(30,215,96,.15)}
-.sl-nav.show{display:flex}
-.sl-nav-info{flex:1;min-width:0}
-.sl-nav-name{font-size:12px;font-weight:700;color:var(--green);font-family:var(--dis);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sl-nav-pos{font-size:11px;color:var(--t3);margin-top:1px}
-.sl-prev,.sl-next{width:34px;height:34px;border-radius:50%;background:var(--s1);border:1px solid var(--b);display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0}
-.sl-prev:active,.sl-next:active{background:var(--s3)}
-.sl-prev svg,.sl-next svg{width:16px;height:16px}
-.sl-prev:disabled,.sl-next:disabled{opacity:.3;pointer-events:none}
-
-/* Error */
-#err-bar{padding:14px 18px;color:var(--red);font-size:14px;line-height:1.6;display:none}
-#err-bar a{color:var(--green);text-decoration:underline;cursor:pointer}
-
-/* ═══════════════ CHORD SHEET ═══════════════ */
-.sheet{padding:8px 18px 16px}
-/* cs font/line set dynamically */
-#cs{font-family:var(--mono);font-size:15px;line-height:2.05;white-space:pre;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.ls{display:block;font-family:var(--dis);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--t4);margin-top:30px}
-.ls:first-child{margin-top:4px}
-.lc{display:block;color:var(--amber);font-weight:500;letter-spacing:.04em}
-.ll{display:block;color:var(--t1)}
-.le{display:block;height:6px}
-
-/* ═══════════════ PLAYER BAR — FIXED, NO OVERLAP ═══════════════ */
-/*
-  The player bar is fixed to the bottom.
-  --pb-h is the bar height. The .page has padding-bottom: var(--pb-h) + safe-area
-  so the last chord line is always above the bar.
-*/
-.pb{
-  position:fixed;
-  bottom:0;left:0;right:0;
-  z-index:300;
-  background:rgba(10,10,10,.98);
-  border-top:1px solid var(--b);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  /* Safe area so iPhone home bar doesn't overlap */
-  padding-bottom:var(--safe-bot);
+/* ─────────────────────────────────────────
+   LOADING SCREEN
+───────────────────────────────────────── */
+#loading {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px;
+  z-index: 9000;
+  transition: opacity .4s, visibility .4s;
 }
-.pb-inner{
-  display:grid;
-  /* Desktop: 3 columns — song info | controls | right tools */
-  grid-template-columns:1fr auto 1fr;
-  align-items:center;
-  gap:12px;
-  padding:10px 18px;
-  min-height:80px;
+#loading.hidden { opacity: 0; visibility: hidden; pointer-events: none }
+
+.loader-logo {
+  width: 56px; height: 56px;
+  background: var(--green);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  animation: logo-pulse 1.8s ease-in-out infinite;
+}
+.loader-logo svg { width: 24px; height: 24px; color: #000 }
+@keyframes logo-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--green-glow) }
+  50%       { box-shadow: 0 0 0 12px transparent, 0 0 32px var(--green-dim) }
+}
+.loader-bars { display: flex; align-items: flex-end; gap: 4px; height: 24px }
+.loader-bar  { width: 3px; background: var(--green); border-radius: 99px; animation: bar-anim .8s ease-in-out infinite }
+.loader-bar:nth-child(1) { height: 8px;  animation-delay: 0s   }
+.loader-bar:nth-child(2) { height: 14px; animation-delay: .12s }
+.loader-bar:nth-child(3) { height: 20px; animation-delay: .24s }
+.loader-bar:nth-child(4) { height: 14px; animation-delay: .36s }
+.loader-bar:nth-child(5) { height: 8px;  animation-delay: .48s }
+@keyframes bar-anim {
+  0%, 100% { transform: scaleY(.25) }
+  50%      { transform: scaleY(1) }
+}
+.loader-text {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase;
+  color: var(--text-3);
 }
 
-/* Left: mini art + song info */
-.pb-l{display:flex;align-items:center;gap:10px;min-width:0}
-.pb-art{width:46px;height:46px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--dis);font-size:18px;font-weight:800;color:rgba(0,0,0,.28)}
-.pb-meta{min-width:0}
-.pb-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pb-artist{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+/* ─────────────────────────────────────────
+   SETTINGS BOTTOM SHEET
+───────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.8);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  z-index: 5000;
+  display: none;
+  align-items: flex-end; justify-content: center;
+}
+.overlay.open { display: flex }
 
-/* Center: scroll controls + speed */
-.pb-c{display:flex;flex-direction:column;align-items:center;gap:7px}
-.pb-btns{display:flex;align-items:center;gap:8px}
-.ctrl-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--t3);transition:color .15s}
-.ctrl-btn svg{width:16px;height:16px}
-.ctrl-btn:active{transform:scale(.9);color:var(--t1)}
-.ctrl-btn:hover{color:var(--t1)}
-.play-btn{width:46px;height:46px;border-radius:50%;background:var(--t1);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 14px rgba(0,0,0,.5);transition:all .18s var(--spring)}
-.play-btn svg{width:17px;height:17px}
-.play-btn:hover,.play-btn.on{background:var(--green);box-shadow:0 4px 20px var(--gg)}
-.play-btn:active{transform:scale(.93)}
+.bottom-sheet {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  max-height: 88vh;
+  display: flex; flex-direction: column;
+  animation: sheet-in .24s var(--spring);
+}
+@keyframes sheet-in { from { transform: translateY(100%) } to { transform: translateY(0) } }
+.bs-handle { width: 36px; height: 4px; background: var(--raised); border-radius: 99px; margin: 12px auto 0; flex-shrink: 0 }
+.bs-head   { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 0; flex-shrink: 0 }
+.bs-title  { font-size: 17px; font-weight: 700; letter-spacing: -.02em }
+.bs-body   { padding: 16px 18px; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: max(20px, var(--safe-b)) }
+.bs-close  { width: 32px; height: 32px; border-radius: 50%; background: var(--raised); display: flex; align-items: center; justify-content: center; color: var(--text-2) }
+.bs-close:active { background: #333 }
+.bs-close svg { width: 14px; height: 14px }
 
-/* Speed slider */
-.speed-row{display:flex;align-items:center;gap:8px;width:100%}
-.spd-lbl{font-size:10px;color:var(--t3);font-family:var(--dis);font-weight:700;white-space:nowrap;width:28px;text-align:center}
-input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:4px;background:var(--bg5);border-radius:99px;cursor:pointer;transition:height .15s;min-width:80px}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;cursor:pointer;box-shadow:0 0 6px rgba(0,0,0,.4)}
-input[type=range]::-moz-range-thumb{width:18px;height:18px;border:none;border-radius:50%;background:#fff}
-input[type=range]:hover,input[type=range]:focus{height:6px}
+.field-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px }
+.field-desc  { font-size: 13px; color: var(--text-3); line-height: 1.5; margin-bottom: 9px }
+.field-input {
+  width: 100%; background: var(--raised); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; color: var(--text-1);
+  font-size: 16px; -webkit-appearance: none; transition: border-color .18s;
+  font-family: var(--mono);
+}
+.field-input::placeholder { color: var(--text-3) }
+.field-input:focus { border-color: var(--green) }
+.field-status { margin-top: 8px; font-size: 13px; padding: 10px 12px; border-radius: 8px; display: none; line-height: 1.4 }
+.field-status.ok  { display: block; background: rgba(30,215,96,.08);  border: 1px solid rgba(30,215,96,.2);  color: var(--green) }
+.field-status.err { display: block; background: rgba(240,68,68,.07); border: 1px solid rgba(240,68,68,.2); color: var(--red) }
+.btn-row { display: flex; gap: 8px; margin-top: 10px }
+.btn-green { flex: 1; padding: 14px; background: var(--green); border-radius: 10px; color: #000; font-size: 14px; font-weight: 700; min-height: 50px }
+.btn-green:active { opacity: .8 }
+.btn-subtle { padding: 14px 16px; background: var(--raised); border: 1px solid var(--border); border-radius: 10px; color: var(--text-2); font-size: 13px; font-weight: 600; min-height: 50px }
+.btn-subtle:active { background: #2a2a2a }
+.btn-danger { padding: 14px; background: rgba(240,68,68,.07); border: 1px solid rgba(240,68,68,.18); border-radius: 10px; color: var(--red); font-size: 13px; font-weight: 600; min-height: 50px }
+.divider { height: 1px; background: var(--border2); margin: 16px 0 }
+.shortcut-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.shortcut-row  { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-3) }
+.shortcut-key  { font-family: var(--mono); font-size: 10px; background: var(--raised); border: 1px solid var(--border); padding: 3px 7px; border-radius: 4px; color: var(--text-2); flex-shrink: 0 }
+.step { display: flex; gap: 11px; font-size: 13px; color: var(--text-3); line-height: 1.6; margin-bottom: 10px }
+.step-n { width: 22px; height: 22px; border-radius: 50%; background: var(--raised); border: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--text-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px }
+.step strong { color: var(--text-2) }
+.step code   { font-family: var(--mono); font-size: 11px; background: var(--raised); padding: 1px 5px; border-radius: 3px; color: var(--chord) }
 
-/* Right: transpose + font + stage + settings */
-.pb-r{display:flex;align-items:center;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+/* ─────────────────────────────────────────
+   TOPBAR  — always visible, notch-safe
+───────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(15,15,15,.96);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border2);
+  padding-top: var(--safe-t);
+}
+.topbar-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  height: 54px;
+}
+.btn-back {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--raised);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2); flex-shrink: 0;
+  text-decoration: none;
+}
+.btn-back:active { background: #2a2a2a; transform: scale(.92) }
+.btn-back svg { width: 20px; height: 20px }
+.topbar-song { flex: 1; min-width: 0 }
+.topbar-song-title  { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2 }
+.topbar-song-artist { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px }
+.topbar-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0 }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--raised); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2); flex-shrink: 0;
+}
+.icon-btn:active { background: #2a2a2a; transform: scale(.92) }
+.icon-btn svg { width: 15px; height: 15px }
 
-.tp{display:flex;align-items:center;background:var(--s1);border:1px solid var(--b);border-radius:99px;padding:2px;flex-shrink:0}
-.tp-btn{width:30px;height:28px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:var(--mono);color:var(--t3)}
-.tp-btn:active{background:var(--s3);color:var(--t1)}
-.tp-val{font-size:11px;font-family:var(--dis);font-weight:700;color:var(--t3);padding:0 4px;min-width:34px;text-align:center;white-space:nowrap}
-.tp-val.on{color:var(--amber)}
+/* ─────────────────────────────────────────
+   SONG META STRIP  (key, capo, transpose)
+───────────────────────────────────────── */
+.meta-strip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border2);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; flex-wrap: nowrap;
+}
+.meta-strip::-webkit-scrollbar { display: none }
+.meta-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 6px;
+  font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+}
+.badge-key   { background: var(--chord-dim); border: 1px solid rgba(240,180,41,.2); color: var(--chord) }
+.badge-capo  { background: var(--raised);    border: 1px solid var(--border);        color: var(--text-2) }
+.badge-tp    { background: var(--raised);    border: 1px solid var(--border);        color: var(--text-3); transition: all .2s }
+.badge-tp.active { background: var(--chord-dim); border-color: rgba(240,180,41,.25); color: var(--chord) }
 
-.fs-group{display:flex;align-items:center;gap:1px;flex-shrink:0}
-.fs-btn{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--t3)}
-.fs-btn:active{background:var(--s2);color:var(--t1)}
-.fs-btn svg{width:14px;height:14px}
+/* Setlist navigation bar */
+.sl-bar {
+  display: none;
+  align-items: center; gap: 0;
+  background: rgba(30,215,96,.06);
+  border-bottom: 1px solid rgba(30,215,96,.12);
+}
+.sl-bar.show { display: flex }
+.sl-nav-btn {
+  width: 52px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2); flex-shrink: 0;
+}
+.sl-nav-btn:active { color: var(--text-1) }
+.sl-nav-btn:disabled { opacity: .25; pointer-events: none }
+.sl-nav-btn svg { width: 18px; height: 18px }
+.sl-info { flex: 1; min-width: 0; text-align: center; padding: 10px 0 }
+.sl-name { font-size: 12px; font-weight: 600; color: var(--green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.sl-pos  { font-size: 11px; color: var(--text-3); margin-top: 1px }
 
-.stage-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:99px;background:var(--s1);border:1px solid var(--b);color:var(--t3);font-size:12px;font-weight:700;font-family:var(--dis);letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
-.stage-btn svg{width:13px;height:13px}
-.stage-btn:active,.stage-btn:hover{background:var(--s2);color:var(--t1)}
-
-/* Scroll toast */
-.toast{position:fixed;top:calc(var(--safe-top) + 66px);left:50%;transform:translateX(-50%);z-index:150;padding:7px 16px;background:rgba(30,215,96,.14);border:1px solid rgba(30,215,96,.3);border-radius:99px;font-size:12px;font-weight:700;font-family:var(--dis);color:var(--green);letter-spacing:.06em;display:none;align-items:center;gap:8px;backdrop-filter:blur(10px);pointer-events:none;white-space:nowrap}
-.toast.show{display:flex}
-.toast-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:td 1s ease-in-out infinite}
-@keyframes td{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* ═══════════════ STAGE MODE ═══════════════ */
-body.stage{background:#000;overflow:hidden}
-body.stage .topbar,body.stage .hero,body.stage .sl-nav,body.stage .pb,body.stage .toast{display:none!important}
-body.stage .page{padding-bottom:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
-body.stage .sheet{padding:36px 40px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-body.stage #cs{font-size:24px;line-height:2.2}
-body.stage .lc{font-size:24px;color:#fcd34d;text-shadow:0 0 32px rgba(252,211,77,.35)}
-body.stage .ll{font-size:24px;color:#e8e8e8}
-body.stage .ls{color:#3a3a3a;font-size:11px;margin-top:32px}
-
-/* Stage HUD (top bar in stage mode) */
-.stage-hud{position:fixed;top:calc(var(--safe-top) + 14px);left:50%;transform:translateX(-50%);z-index:999;display:none;align-items:center;gap:10px;padding:8px 16px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.12);border-radius:99px;backdrop-filter:blur(14px)}
-body.stage .stage-hud{display:flex}
-.shud-play{width:32px;height:32px;border-radius:50%;background:var(--green);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.shud-play:active{transform:scale(.92)}
-.shud-play svg{width:12px;height:12px}
-.shud-sep{width:1px;height:18px;background:rgba(255,255,255,.1)}
-.shud-spd{display:flex;align-items:center;gap:8px}
-.shud-spd span{font-size:11px;color:var(--t3);font-family:var(--dis);font-weight:600}
-#shud-slider{width:80px;height:3px}
-.shud-exit{width:28px;height:28px;border-radius:50%;background:var(--s2);border:1px solid var(--b);display:flex;align-items:center;justify-content:center;color:var(--t3)}
-.shud-exit:active,.shud-exit:hover{background:var(--s3);color:var(--t1)}
-.shud-exit svg{width:13px;height:13px}
-
-/* ═══════════════ RESPONSIVE ═══════════════ */
-@media(min-width:900px){
-  :root{--pb-h:110px}
-  .pb-inner{padding:12px 24px;min-height:90px}
-  .hero{padding:40px 28px 28px}
-  .hero-art{width:160px;height:160px;font-size:68px}
-  .hero-title{font-size:clamp(22px,3.5vw,48px)}
-  .sheet{padding:10px 28px 16px}
-  #cs{font-size:16px}
-  .topbar-inner{padding:12px 22px}
+/* ─────────────────────────────────────────
+   CHORD SHEET
+───────────────────────────────────────── */
+.sheet-wrap {
+  /* bottom padding keeps content above player bar */
+  padding: 20px 18px calc(var(--bar-h) + var(--safe-b) + 24px);
+  max-width: 900px;
 }
 
-@media(max-width:640px){
-  /* Fix: player bar responsive stacking on mobile */
-  :root{--pb-h:148px}
-
-  .pb-inner{
-    /* Stack: top row = art+title+play | bottom row = controls */
-    grid-template-columns:1fr auto;
-    grid-template-rows:auto auto;
-    gap:8px;
-    padding:10px 14px;
-    min-height:auto;
-  }
-  .pb-l{grid-column:1;grid-row:1}
-  .pb-c{grid-column:2;grid-row:1;align-items:flex-end}
-  /* Hide speed row in center on mobile, show separate speed strip below */
-  .pb-c .speed-row{display:none}
-  .pb-r{
-    grid-column:1/-1;
-    grid-row:2;
-    justify-content:space-between;
-    border-top:1px solid var(--bs);
-    padding-top:8px;
-    flex-wrap:nowrap;
-    gap:4px;
-  }
-  /* Speed slider full width strip on mobile */
-  .pb-speed-strip{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    grid-column:1/-1;
-    grid-row:3;
-    padding-top:6px;
-    border-top:1px solid var(--bs);
-  }
-  .spd-lbl-mob{font-size:10px;color:var(--t3);font-family:var(--dis);font-weight:700;white-space:nowrap}
-  #speed-mob{flex:1;height:4px}
-
-  /* Hero stacked */
-  .hero{padding:20px 14px 18px}
-  .hero-inner{flex-direction:column;align-items:flex-start;gap:14px}
-  .hero-art{width:96px;height:96px;font-size:38px}
-  .hero-title{font-size:clamp(18px,5.5vw,28px)}
-
-  /* Sheet — slightly smaller */
-  .sheet{padding:6px 14px 12px}
-  #cs{font-size:13px;line-height:1.95}
-
-  /* Topbar */
-  .topbar-inner{padding:9px 12px}
-
-  /* Stage: bigger text on small screen */
-  body.stage .sheet{padding:24px 18px}
-  body.stage #cs{font-size:18px;line-height:2}
-  body.stage .lc,.body.stage .ll{font-size:18px}
+#cs {
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 2.1;
+  white-space: pre;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-@media(max-width:390px){
-  #cs{font-size:12px}
-  .hero-art{width:80px;height:80px;font-size:32px}
-  .pb-r{gap:2px}
-  .tp-btn{width:26px;height:26px}
-  .stage-btn span{display:none}
+/* Line types */
+.l-section {
+  display: block;
+  font-family: var(--ui);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-3);
+  margin-top: 28px; margin-bottom: -4px;
+}
+.l-section:first-child { margin-top: 4px }
+
+.l-chord  { display: block; color: var(--chord); font-weight: 500; letter-spacing: .03em }
+.l-lyric  { display: block; color: var(--text-1) }
+.l-gap    { display: block; height: 6px }
+
+/* Error state */
+#err-msg {
+  padding: 20px 18px; color: var(--red);
+  font-size: 14px; line-height: 1.6; display: none;
+}
+#err-msg a { color: var(--green); text-decoration: underline; cursor: pointer }
+
+/* ─────────────────────────────────────────
+   PLAYER BAR  —  fixed to bottom
+   Layout (mobile-first):
+   Row 1: [Reset]  [PLAY/PAUSE big]  [End]
+   Row 2: Scroll Speed  [slider]
+   Row 3: Key[-] [value] [+]  |  A-  A+  |  [Stage] [Settings]
+───────────────────────────────────────── */
+.player-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 300;
+  background: rgba(12,12,12,.98);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  padding-bottom: var(--safe-b);
+}
+
+/* Scroll-active state: green tint on bar top */
+.player-bar.playing { border-top-color: rgba(30,215,96,.4) }
+
+/* ── Row 1: Main play controls ── */
+.pb-controls {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px;
+  padding: 14px 18px 8px;
+}
+
+.ctrl-side-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--raised); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2);
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.ctrl-side-btn:active { background: #2a2a2a; color: var(--text-1); transform: scale(.9) }
+.ctrl-side-btn svg { width: 17px; height: 17px }
+
+/* The big central play/pause button */
+.play-pause-btn {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--text-1);
+  color: #000;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 18px rgba(0,0,0,.5);
+  transition: background .2s, box-shadow .2s, transform .15s var(--spring);
+}
+.play-pause-btn:active { transform: scale(.92) }
+.play-pause-btn.playing {
+  background: var(--green);
+  box-shadow: 0 4px 24px var(--green-glow);
+}
+.play-pause-btn svg { width: 22px; height: 22px }
+
+/* ── Row 2: Speed ── */
+.pb-speed {
+  display: flex; align-items: center; gap: 10px;
+  padding: 2px 18px 8px;
+}
+.pb-speed-label {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-3); white-space: nowrap;
+  min-width: 80px;
+}
+.pb-speed-label span { color: var(--text-2) }
+
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  flex: 1; height: 4px;
+  background: var(--raised); border-radius: 99px;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%; background: var(--text-1);
+  box-shadow: 0 1px 6px rgba(0,0,0,.5);
+  cursor: pointer;
+}
+input[type=range]::-moz-range-thumb {
+  width: 20px; height: 20px; border: none;
+  border-radius: 50%; background: var(--text-1);
+}
+
+/* ── Row 3: Tools ── */
+.pb-tools {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px;
+  padding: 6px 14px 10px;
+  border-top: 1px solid var(--border2);
+}
+
+/* Transpose group */
+.tool-group { display: flex; align-items: center; gap: 0; background: var(--raised); border: 1px solid var(--border); border-radius: 8px; overflow: hidden }
+.tool-group-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin-right: 6px; white-space: nowrap }
+.tg-btn {
+  width: 36px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: var(--text-2);
+  font-family: var(--mono);
+  transition: all .12s;
+}
+.tg-btn:active { background: #2a2a2a; color: var(--text-1) }
+.tg-divider { width: 1px; height: 20px; background: var(--border); flex-shrink: 0 }
+.tg-val {
+  min-width: 44px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; font-family: var(--mono);
+  color: var(--text-2); letter-spacing: .03em;
+  cursor: pointer;
+  transition: color .15s;
+}
+.tg-val.shifted { color: var(--chord) }
+
+/* Font size group */
+.font-group { display: flex; align-items: center; gap: 0; background: var(--raised); border: 1px solid var(--border); border-radius: 8px; overflow: hidden }
+.font-btn {
+  width: 40px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--text-2);
+}
+.font-btn:active { background: #2a2a2a; color: var(--text-1) }
+.font-btn.small { font-size: 11px }
+.font-btn.large { font-size: 16px }
+
+/* Stage + Settings buttons */
+.tool-btn {
+  height: 34px; padding: 0 12px;
+  border-radius: 8px;
+  background: var(--raised); border: 1px solid var(--border);
+  color: var(--text-2); font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.tool-btn svg { width: 13px; height: 13px }
+.tool-btn:active { background: #2a2a2a; color: var(--text-1) }
+.tool-btn.settings-only { width: 34px; padding: 0; justify-content: center }
+
+/* ─────────────────────────────────────────
+   STAGE MODE
+───────────────────────────────────────── */
+body.stage { background: #000; overflow: hidden }
+body.stage .topbar,
+body.stage .meta-strip,
+body.stage .sl-bar,
+body.stage .player-bar { display: none !important }
+body.stage .sheet-wrap {
+  height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 32px 32px 80px;
+}
+body.stage #cs { font-size: 22px; line-height: 2.2 }
+body.stage .l-chord { color: #fbbf24; text-shadow: 0 0 28px rgba(251,191,36,.3) }
+body.stage .l-lyric  { color: #e8e8e8 }
+body.stage .l-section { color: #3a3a3a; margin-top: 40px }
+
+/* Stage HUD — minimal floating bar at top */
+.stage-hud {
+  position: fixed;
+  top: calc(var(--safe-t) + 14px);
+  left: 50%; transform: translateX(-50%);
+  z-index: 999;
+  display: none;
+  align-items: center; gap: 12px;
+  padding: 8px 16px;
+  background: rgba(0,0,0,.7); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 99px; backdrop-filter: blur(12px);
+  white-space: nowrap;
+}
+body.stage .stage-hud { display: flex }
+.shud-play-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--green); color: #000;
+  display: flex; align-items: center; justify-content: center;
+}
+.shud-play-btn svg { width: 12px; height: 12px }
+.shud-play-btn:active { transform: scale(.9) }
+.shud-divider { width: 1px; height: 16px; background: rgba(255,255,255,.1) }
+.shud-speed-label { font-size: 11px; color: var(--text-3) }
+#shud-speed { width: 72px }
+.shud-exit-btn {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3);
+}
+.shud-exit-btn svg { width: 12px; height: 12px }
+.shud-exit-btn:active,.shud-exit-btn:hover { color: var(--text-1); background: rgba(255,255,255,.12) }
+
+/* Exit button bottom-right in stage */
+.stage-exit-pill {
+  position: fixed;
+  bottom: calc(var(--safe-b) + 20px); right: 20px;
+  z-index: 999; display: none;
+  align-items: center; gap: 6px;
+  padding: 9px 16px; border-radius: 99px;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+  backdrop-filter: blur(10px); color: rgba(255,255,255,.4);
+  font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+}
+.stage-exit-pill svg { width: 12px; height: 12px }
+.stage-exit-pill:active,.stage-exit-pill:hover { color: var(--text-1); background: rgba(255,255,255,.1) }
+body.stage .stage-exit-pill { display: flex }
+
+/* ─────────────────────────────────────────
+   RESPONSIVE ADJUSTMENTS
+───────────────────────────────────────── */
+/* Large phones / small desktop — slightly bigger sheet */
+@media (min-width: 480px) {
+  #cs { font-size: 16px }
+}
+
+/* Desktop */
+@media (min-width: 860px) {
+  :root { --bar-h: 130px }
+  .sheet-wrap { padding: 28px 36px calc(var(--bar-h) + var(--safe-b) + 28px) }
+  #cs { font-size: 16px; line-height: 2.1 }
+
+  .pb-controls { gap: 24px; padding: 12px 24px 8px }
+  .pb-speed     { padding: 2px 24px 8px }
+  .pb-tools     { padding: 6px 20px 12px }
+  .topbar-row   { padding: 10px 20px }
+
+  body.stage .sheet-wrap { padding: 40px 60px 80px }
+  body.stage #cs { font-size: 26px }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  :root { --bar-h: 170px }
+  #cs { font-size: 12px }
+  .tg-btn { width: 30px }
+  .tg-val { min-width: 38px }
+  .tool-btn span { display: none } /* hide text labels, keep icons */
 }
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="ld">
-  <div class="ld-inner">
-    <div class="ld-icon">🎸</div>
-    <div class="ld-bars"><div class="ld-bar"></div><div class="ld-bar"></div><div class="ld-bar"></div><div class="ld-bar"></div><div class="ld-bar"></div></div>
-    <p class="ld-label">Loading song…</p>
+<!-- ════════════════════════════════════
+     LOADING
+════════════════════════════════════ -->
+<div id="loading">
+  <div class="loader-logo">
+    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
   </div>
+  <div class="loader-bars">
+    <div class="loader-bar"></div><div class="loader-bar"></div>
+    <div class="loader-bar"></div><div class="loader-bar"></div>
+    <div class="loader-bar"></div>
+  </div>
+  <div class="loader-text">Loading song</div>
 </div>
 
-<!-- SETTINGS MODAL -->
-<div class="overlay" id="settings-modal">
-  <div class="sheet">
-    <div class="sheet-drag"></div>
-    <div class="sheet-head">
-      <div class="sheet-title">⚙️ Settings</div>
-      <button class="modal-x" id="close-settings"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+<!-- ════════════════════════════════════
+     SETTINGS BOTTOM SHEET
+════════════════════════════════════ -->
+<div class="overlay" id="settings-overlay">
+  <div class="bottom-sheet">
+    <div class="bs-handle"></div>
+    <div class="bs-head">
+      <div class="bs-title">Settings</div>
+      <button class="bs-close" id="close-settings-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
-    <div class="sheet-body">
-      <label class="field-label" for="api-input">Google Apps Script URL</label>
-      <p class="field-desc">Your Web App URL — saved in your browser.</p>
-      <input class="field-input" id="api-input" type="url" placeholder="https://script.google.com/macros/s/…/exec" spellcheck="false" autocomplete="off" inputmode="url"/>
+    <div class="bs-body">
+      <label class="field-label" for="api-url-input">Google Apps Script URL</label>
+      <p class="field-desc">Your Web App URL from Google Apps Script. Saved in this browser.</p>
+      <input class="field-input" id="api-url-input" type="url"
+             placeholder="https://script.google.com/macros/s/…/exec"
+             spellcheck="false" autocomplete="off" inputmode="url"/>
       <div class="btn-row">
-        <button class="btn-g" id="btn-save-api">💾 Save &amp; Load</button>
-        <button class="btn-b" id="btn-test-api">🔍 Test</button>
-        <button class="btn-r" id="btn-clear-api">✕</button>
+        <button class="btn-green" id="save-api-btn">Save &amp; Load</button>
+        <button class="btn-subtle" id="test-api-btn">Test</button>
+        <button class="btn-danger" id="clear-api-btn">Clear</button>
       </div>
       <div class="field-status" id="api-status"></div>
-      <div class="sep"></div>
+
+      <div class="divider"></div>
+      <label class="field-label">Setup Guide</label>
+      <div class="step"><div class="step-n">1</div><div>Open <strong>Google Sheets</strong>. First row must be: <code>ID</code> <code>Title</code> <code>Artist</code> <code>Key</code> <code>Capo</code> <code>Content</code></div></div>
+      <div class="step"><div class="step-n">2</div><div>Go to <strong>Extensions → Apps Script</strong>, paste the API code, and save.</div></div>
+      <div class="step"><div class="step-n">3</div><div><strong>Deploy → New deployment</strong>. Type: Web app. Access: <strong>Anyone</strong>. Copy the URL.</div></div>
+      <div class="step"><div class="step-n">4</div><div>Paste the URL above and tap <strong>Save &amp; Load</strong>.</div></div>
+
+      <div class="divider"></div>
       <label class="field-label">Keyboard Shortcuts</label>
-      <div class="keys-grid">
-        <div class="key-row"><span class="key-badge">Space / K</span>Play/Pause</div>
-        <div class="key-row"><span class="key-badge">T</span>Back to top</div>
-        <div class="key-row"><span class="key-badge">[ / ]</span>Transpose</div>
-        <div class="key-row"><span class="key-badge">\</span>Reset key</div>
-        <div class="key-row"><span class="key-badge">+ / −</span>Font size</div>
-        <div class="key-row"><span class="key-badge">F</span>Stage mode</div>
-        <div class="key-row"><span class="key-badge">← / →</span>Setlist nav</div>
-        <div class="key-row"><span class="key-badge">Esc</span>Exit stage</div>
+      <div class="shortcut-grid">
+        <div class="shortcut-row"><span class="shortcut-key">Space</span> Play / Pause</div>
+        <div class="shortcut-row"><span class="shortcut-key">T</span> Back to top</div>
+        <div class="shortcut-row"><span class="shortcut-key">[ ]</span> Transpose</div>
+        <div class="shortcut-row"><span class="shortcut-key">\</span> Reset key</div>
+        <div class="shortcut-row"><span class="shortcut-key">+ −</span> Font size</div>
+        <div class="shortcut-row"><span class="shortcut-key">F</span> Stage mode</div>
+        <div class="shortcut-row"><span class="shortcut-key">Esc</span> Exit stage</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- STAGE HUD -->
+<!-- ════════════════════════════════════
+     STAGE HUD
+════════════════════════════════════ -->
 <div class="stage-hud" id="stage-hud">
-  <button class="shud-play" id="shud-play-btn">
-    <svg id="shud-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+  <button class="shud-play-btn" id="shud-play-btn">
+    <svg id="shud-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
   </button>
-  <div class="shud-sep"></div>
-  <div class="shud-spd">
-    <span>Speed</span>
-    <input type="range" id="shud-slider" min="1" max="10" value="3"/>
-  </div>
-  <div class="shud-sep"></div>
-  <button class="shud-exit" id="shud-exit-btn" title="Exit stage">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+  <div class="shud-divider"></div>
+  <span class="shud-speed-label">Speed</span>
+  <input type="range" id="shud-speed" min="1" max="10" value="3"/>
+  <div class="shud-divider"></div>
+  <button class="shud-exit-btn" id="shud-exit-btn" title="Exit stage">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
   </button>
 </div>
 
-<!-- Scroll Toast -->
-<div class="toast" id="toast"><span class="toast-dot"></span>Auto-Scroll ON</div>
+<button class="stage-exit-pill" id="stage-exit-pill">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+  Exit Stage
+</button>
 
-<!-- PAGE -->
-<div class="page">
-
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="tb-left">
-        <a href="index.html" class="btn-back" title="Back to Library">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-        </a>
-        <a href="index.html" class="tb-brand">
-          <div class="tb-dot">🎸</div>
-          <span>Chord Stage</span>
-        </a>
-      </div>
-      <div class="tb-right">
-        <button class="icon-btn" id="settings-btn" title="Settings">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-        </button>
+<!-- ════════════════════════════════════
+     TOPBAR
+════════════════════════════════════ -->
+<header class="topbar">
+  <div class="topbar-row">
+    <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px">
+      <a href="index.html" class="btn-back" title="Back to library">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <div class="topbar-song">
+        <div class="topbar-song-title" id="top-title">Loading…</div>
+        <div class="topbar-song-artist" id="top-artist"></div>
       </div>
     </div>
-  </header>
-
-  <!-- SETLIST NAV STRIP -->
-  <div class="sl-nav" id="sl-nav">
-    <button class="sl-prev" id="sl-prev-btn" disabled>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-    <div class="sl-nav-info">
-      <div class="sl-nav-name" id="sl-nav-name">Setlist</div>
-      <div class="sl-nav-pos" id="sl-nav-pos">Song 1 of 1</div>
-    </div>
-    <button class="sl-next" id="sl-next-btn">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
-  </div>
-
-  <!-- HERO -->
-  <div class="hero">
-    <div class="hero-grad" id="hero-grad"></div>
-    <div class="hero-inner">
-      <div class="hero-art" id="hero-art">?</div>
-      <div class="hero-info">
-        <div class="hero-type">Guitar Chords</div>
-        <h1 class="hero-title" id="h-title">Loading…</h1>
-        <div class="hero-meta">
-          <span class="hero-artist" id="h-artist"></span>
-          <span class="mdot" id="m-dot" style="display:none">•</span>
-          <span class="badge b-key" id="b-key" style="display:none"></span>
-          <span class="badge b-capo" id="b-capo" style="display:none"></span>
-          <span class="mdot" id="m-dot2" style="display:none">•</span>
-          <span class="badge b-tp" id="b-tp" style="display:none">Original Key</span>
-        </div>
-      </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="settings-open-btn" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        </svg>
+      </button>
     </div>
   </div>
+</header>
 
-  <!-- ERROR -->
-  <div id="err-bar"></div>
-
-  <!-- CHORD SHEET -->
-  <div class="sheet"><div id="cs"></div></div>
-
+<!-- ════════════════════════════════════
+     META STRIP  (key / capo / transpose)
+════════════════════════════════════ -->
+<div class="meta-strip" id="meta-strip">
+  <span class="meta-badge badge-key"  id="badge-key"   style="display:none"></span>
+  <span class="meta-badge badge-capo" id="badge-capo"  style="display:none"></span>
+  <span class="meta-badge badge-tp"   id="badge-tp"    style="display:none">Original Key</span>
 </div>
 
-<!-- ═══════════════ PLAYER BAR ═══════════════ -->
-<!--
-  Fixed to bottom. Content padding-bottom equals --pb-h so nothing hides under it.
--->
-<div class="pb" id="pb">
-  <div class="pb-inner">
+<!-- ════════════════════════════════════
+     SETLIST NAV BAR
+════════════════════════════════════ -->
+<div class="sl-bar" id="sl-bar">
+  <button class="sl-nav-btn" id="sl-prev-btn" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <div class="sl-info">
+    <div class="sl-name" id="sl-name">Setlist</div>
+    <div class="sl-pos"  id="sl-pos">Song 1 of 1</div>
+  </div>
+  <button class="sl-nav-btn" id="sl-next-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+</div>
 
-    <!-- LEFT: song mini info -->
-    <div class="pb-l">
-      <div class="pb-art" id="pb-art"></div>
-      <div class="pb-meta">
-        <div class="pb-title" id="pb-title">—</div>
-        <div class="pb-artist" id="pb-artist"></div>
+<!-- ════════════════════════════════════
+     CHORD SHEET
+════════════════════════════════════ -->
+<div id="err-msg"></div>
+<div class="sheet-wrap">
+  <div id="cs"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     PLAYER BAR
+     Three clean rows:
+     1. Reset | Play/Pause | End
+     2. Scroll speed slider
+     3. Key transpose | Font size | Stage | Settings
+════════════════════════════════════ -->
+<div class="player-bar" id="player-bar">
+
+  <!-- Row 1: Scroll controls -->
+  <div class="pb-controls">
+    <button class="ctrl-side-btn" id="btn-to-top" title="Back to top">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="1,4 1,10 7,10"/>
+        <path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
+      </svg>
+    </button>
+
+    <!-- Single button that toggles play/pause -->
+    <button class="play-pause-btn" id="play-pause-btn" title="Auto Scroll (Space)">
+      <svg id="play-pause-icon" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5,3 19,12 5,21"/>
+      </svg>
+    </button>
+
+    <button class="ctrl-side-btn" id="btn-to-bottom" title="Jump to end">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="5" y1="20" x2="19" y2="20"/>
+        <polyline points="12,4 19,11 12,18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Row 2: Speed -->
+  <div class="pb-speed">
+    <div class="pb-speed-label">Scroll Speed &nbsp;<span id="speed-val">3</span></div>
+    <input type="range" id="speed-slider" min="1" max="10" value="3"/>
+  </div>
+
+  <!-- Row 3: Tools -->
+  <div class="pb-tools">
+
+    <!-- Transpose -->
+    <div style="display:flex;align-items:center;gap:5px">
+      <span style="font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase">Key</span>
+      <div class="tool-group">
+        <button class="tg-btn" id="tp-down-btn" title="Flatten">b</button>
+        <div class="tg-divider"></div>
+        <button class="tg-val" id="tp-value-btn" title="Reset">0</button>
+        <div class="tg-divider"></div>
+        <button class="tg-btn" id="tp-up-btn" title="Sharpen">#</button>
       </div>
     </div>
 
-    <!-- CENTER: play controls + speed -->
-    <div class="pb-c">
-      <div class="pb-btns">
-        <button class="ctrl-btn" id="btn-reset" title="Back to top (T)">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
-        </button>
-        <button class="play-btn" id="btn-play" title="Auto-scroll (Space)">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-        </button>
-        <button class="play-btn on" id="btn-pause" title="Pause (Space)" style="display:none">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-        </button>
-        <button class="ctrl-btn" id="btn-end" title="Jump to end">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
-        </button>
-      </div>
-      <!-- Speed row (desktop only — mobile has strip below) -->
-      <div class="speed-row">
-        <span class="spd-lbl">🐢</span>
-        <input type="range" id="speed" min="1" max="10" value="3" title="Scroll speed"/>
-        <span class="spd-lbl">🐇</span>
+    <!-- Font size -->
+    <div style="display:flex;align-items:center;gap:5px">
+      <span style="font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase">Text</span>
+      <div class="font-group">
+        <button class="font-btn small" id="font-down-btn" title="Smaller">A−</button>
+        <div class="tg-divider"></div>
+        <button class="font-btn large" id="font-up-btn" title="Larger">A+</button>
       </div>
     </div>
 
-    <!-- RIGHT: tools -->
-    <div class="pb-r">
-      <!-- Transpose -->
-      <div class="tp" title="Transpose [ ]">
-        <button class="tp-btn" id="tp-dn" title="♭ Lower ([ )">♭</button>
-        <button class="tp-val" id="tp-val" title="Reset key (\)">♮ 0</button>
-        <button class="tp-btn" id="tp-up" title="♯ Raise (])">♯</button>
-      </div>
-      <!-- Font size -->
-      <div class="fs-group" title="Font size">
-        <button class="fs-btn" id="fs-dn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-        <button class="fs-btn" id="fs-up"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-      </div>
-      <!-- Stage -->
-      <button class="stage-btn" id="btn-stage">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    <!-- Stage + Settings -->
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="tool-btn" id="stage-btn" title="Stage mode (F)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
         <span>Stage</span>
       </button>
-      <!-- Settings -->
-      <button class="icon-btn" id="pb-settings-btn" title="Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <button class="tool-btn settings-only" id="pb-settings-btn" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
       </button>
     </div>
 
-    <!-- MOBILE SPEED STRIP (shown only on mobile via grid row 3) -->
-    <div class="pb-speed-strip">
-      <span class="spd-lbl-mob">🐢 Slow</span>
-      <input type="range" id="speed-mob" min="1" max="10" value="3"/>
-      <span class="spd-lbl-mob">Fast 🐇</span>
-    </div>
-
   </div>
-</div>
+</div><!-- /player-bar -->
 
 <script>
-/* ══════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════
    CHORD STAGE · song.html
-   Fixes: notch-safe header, no overlap, RAF scroll,
-          setlist mode, speed bar, all screen sizes
-══════════════════════════════════════════════════ */
-const API_KEY='cs_api_url', SL_KEY='cs_setlists';
-const PALETTES=[['#1a6b3a','#0d4a28'],['#7c3aed','#4c1d95'],['#dc2626','#7f1d1d'],['#0369a1','#0c4a6e'],['#d97706','#78350f'],['#0891b2','#164e63'],['#be185d','#500724'],['#4f46e5','#1e1b4b'],['#16a34a','#052e16'],['#b45309','#451a03'],['#7e22ce','#3b0764'],['#0f766e','#042f2e'],['#b91c1c','#450a0a'],['#1d4ed8','#1e3a8a'],['#a16207','#431407'],['#9d174d','#500724']];
-const CHROMATIC=[['C'],['C#','Db'],['D'],['D#','Eb'],['E'],['F'],['F#','Gb'],['G'],['G#','Ab'],['A'],['A#','Bb'],['B']];
+════════════════════════════════════════════════════ */
 
-/* ─ utils ─ */
-function pal(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return PALETTES[Math.abs(h)%PALETTES.length]}
-function ltr(t){return(t||'?').trim()[0].toUpperCase()}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function apiUrl(){return localStorage.getItem(API_KEY)||''}
-function saveApiUrl(u){localStorage.setItem(API_KEY,u)}
-function clearApiUrl(){localStorage.removeItem(API_KEY)}
-function getSetlists(){try{return JSON.parse(localStorage.getItem(SL_KEY))||[]}catch{return[]}}
+/* ── Constants ── */
+const API_KEY  = 'cs_api_url';
+const SL_KEY   = 'cs_setlists';
+const CHROMATIC = [
+  ['C'],['C#','Db'],['D'],['D#','Eb'],['E'],
+  ['F'],['F#','Gb'],['G'],['G#','Ab'],['A'],['A#','Bb'],['B']
+];
+const PALETTES = [
+  ['#1a6b3a','#0d4a28'],['#7c3aed','#4c1d95'],['#dc2626','#7f1d1d'],
+  ['#0369a1','#0c4a6e'],['#d97706','#78350f'],['#0891b2','#164e63'],
+  ['#be185d','#500724'],['#4f46e5','#1e1b4b'],['#16a34a','#052e16'],
+  ['#b45309','#451a03'],['#7e22ce','#3b0764'],['#0f766e','#042f2e']
+];
 
-/* ─ URL params ─ */
-const params=new URLSearchParams(window.location.search);
-const SONG_ID=params.get('id')||'';
-const SL_ID=params.get('sl')||'';
-let SL_IDX=parseInt(params.get('sli')||'0',10);
+/* ── URL params ── */
+const params  = new URLSearchParams(window.location.search);
+const SONG_ID = params.get('id') || '';
+const SL_ID   = params.get('sl') || '';
+let   SL_IDX  = parseInt(params.get('sli') || '0', 10);
 
-/* ─ state ─ */
-let _raw='', _tp=0, _fs=15;
+/* ── State ── */
+let rawContent = '';
+let transposeSteps = 0;
+let fontSize = 15;
 
-/* ─ transpose engine ─ */
-function noteIdx(n){for(let i=0;i<CHROMATIC.length;i++)if(CHROMATIC[i].includes(n))return i;return -1}
-function shiftNote(n,s){const i=noteIdx(n);return i<0?n:CHROMATIC[((i+s)%12+12)%12][0]}
-function shiftChord(c,s){const m=c.match(/^([A-G][b#]?)(.*?)(\/([A-G][b#]?))?$/);if(!m)return c;return shiftNote(m[1],s)+(m[2]||'')+(m[4]?'/'+shiftNote(m[4],s):'')}
-function shiftLine(line,s){
-  if(!s)return line;
-  return line.replace(/\b[A-G][b#]?\S*/g,t=>{const nl=(t[1]==='#'||t[1]==='b')?2:1;return noteIdx(t.slice(0,nl))>=0?shiftChord(t,s):t});
+/* ── Helpers ── */
+function pal(s){
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = ((h<<5)-h) + s.charCodeAt(i); h|=0 }
+  return PALETTES[Math.abs(h) % PALETTES.length];
 }
-function setTp(v){_tp=v;renderSheet();updateTpUI()}
-function resetTp(){setTp(0)}
-function updateTpUI(){
-  const badge=document.getElementById('b-tp'),val=document.getElementById('tp-val');
-  const m2=document.getElementById('m-dot2');
-  const txt=_tp===0?'Original Key':'Transposed '+(_tp>0?'+':'')+_tp;
-  if(badge){badge.textContent=txt;badge.style.display='inline-flex';badge.classList.toggle('on',_tp!==0);if(m2)m2.style.display='inline'}
-  if(val){val.textContent=_tp===0?'♮ 0':(_tp>0?'+':'')+_tp;val.classList.toggle('on',_tp!==0)}
-}
+function firstLetter(t) { return (t||'?').trim()[0].toUpperCase() }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function apiUrl()       { return localStorage.getItem(API_KEY) || '' }
+function saveApiUrl(u)  { localStorage.setItem(API_KEY, u) }
+function clearApiUrl()  { localStorage.removeItem(API_KEY) }
+function getSetlists()  { try { return JSON.parse(localStorage.getItem(SL_KEY)) || [] } catch { return [] } }
 
-/* ─ chord detection ─ */
-function isChordLine(line){
-  const t=line.trim();if(!t)return false;
-  const tokens=t.split(/\s+/);
-  const isChordToken=tk=>/^[A-G][b#]?(maj7?|min7?|m7?|M7?|aug|dim|sus[24]?|add[29]?|[2-9]|11|13|\/[A-G][b#]?)*$/.test(tk);
-  const cnt=tokens.filter(isChordToken).length;
-  return cnt>0&&cnt/tokens.length>=0.55;
+/* ── Loading ── */
+function hideLoading() { document.getElementById('loading').classList.add('hidden') }
+function showError(msg) {
+  const el = document.getElementById('err-msg');
+  el.innerHTML = msg; el.style.display = 'block';
 }
 
-/* ─ render sheet ─ */
-function renderSheet(){
-  const el=document.getElementById('cs');if(!el||!_raw)return;
-  let html='';
-  _raw.split('\n').forEach(line=>{
-    const t=line.trim();
-    if(/^\[.+\]$/.test(t))    html+='<span class="ls">'+esc(t.slice(1,-1))+'</span>';
-    else if(!t)               html+='<span class="le"></span>';
-    else if(isChordLine(line))html+='<span class="lc">'+esc(shiftLine(line,_tp))+'</span>';
-    else                      html+='<span class="ll">'+esc(line)+'</span>';
+/* ══════════════════════════════════════
+   TRANSPOSE
+══════════════════════════════════════ */
+function noteIndex(n) {
+  for (let i = 0; i < CHROMATIC.length; i++)
+    if (CHROMATIC[i].includes(n)) return i;
+  return -1;
+}
+function shiftNote(n, s) {
+  const i = noteIndex(n);
+  return i < 0 ? n : CHROMATIC[((i + s) % 12 + 12) % 12][0];
+}
+function shiftChord(c, s) {
+  const m = c.match(/^([A-G][b#]?)(.*?)(\/([A-G][b#]?))?$/);
+  if (!m) return c;
+  return shiftNote(m[1], s) + (m[2]||'') + (m[4] ? '/' + shiftNote(m[4], s) : '');
+}
+function shiftLine(line, s) {
+  if (!s) return line;
+  return line.replace(/\b[A-G][b#]?\S*/g, tok => {
+    const nl = (tok[1]==='#'||tok[1]==='b') ? 2 : 1;
+    return noteIndex(tok.slice(0, nl)) >= 0 ? shiftChord(tok, s) : tok;
   });
-  el.innerHTML=html;
-  el.style.fontSize=_fs+'px';
+}
+function setTranspose(v) {
+  transposeSteps = v;
+  renderSheet();
+  updateTransposeUI();
+}
+function resetTranspose() { setTranspose(0) }
+function updateTransposeUI() {
+  const val  = document.getElementById('tp-value-btn');
+  const badge = document.getElementById('badge-tp');
+  const shifted = transposeSteps !== 0;
+  const label = shifted ? (transposeSteps > 0 ? '+' : '') + transposeSteps : '0';
+  if (val) { val.textContent = label; val.classList.toggle('shifted', shifted) }
+  if (badge) {
+    badge.textContent = shifted ? 'Transposed ' + (transposeSteps > 0 ? '+' : '') + transposeSteps : 'Original Key';
+    badge.classList.toggle('active', shifted);
+    badge.style.display = 'inline-flex';
+  }
 }
 
-/* ─ AUTO-SCROLL (requestAnimationFrame — smooth on phone) ─ */
-let _scrolling=false;
-let _rafId=null;
-let _speed=0.8; // px per frame (at 60fps)
-let _lastTime=null;
-
-function rafScroll(ts){
-  if(!_scrolling)return;
-  if(!_lastTime)_lastTime=ts;
-  const delta=ts-_lastTime;_lastTime=ts;
-  // scroll amount = speed * (delta / 16.67) so it's frame-rate independent
-  const amt=_speed*(delta/16.67);
-  window.scrollBy(0,amt);
-  // stop at very bottom
-  const atBottom=window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-4;
-  if(atBottom){pauseScroll();}
-  else{_rafId=requestAnimationFrame(rafScroll)}
+/* ══════════════════════════════════════
+   CHORD LINE DETECTION
+══════════════════════════════════════ */
+function isChordLine(line) {
+  const t = line.trim();
+  if (!t) return false;
+  const tokens = t.split(/\s+/);
+  const isChord = tk => /^[A-G][b#]?(maj7?|min7?|m7?|M7?|aug|dim|sus[24]?|add[29]?|[2-9]|11|13|\/[A-G][b#]?)*$/.test(tk);
+  const count = tokens.filter(isChord).length;
+  return count > 0 && count / tokens.length >= 0.55;
 }
 
-function startScroll(){
-  if(_scrolling)return;
-  _scrolling=true;_lastTime=null;
-  _rafId=requestAnimationFrame(rafScroll);
+/* ══════════════════════════════════════
+   RENDER SHEET
+══════════════════════════════════════ */
+function renderSheet() {
+  const el = document.getElementById('cs');
+  if (!el || !rawContent) return;
+  let html = '';
+  rawContent.split('\n').forEach(line => {
+    const t = line.trim();
+    if (/^\[.+\]$/.test(t))    html += '<span class="l-section">' + esc(t.slice(1,-1)) + '</span>';
+    else if (!t)               html += '<span class="l-gap"></span>';
+    else if (isChordLine(line)) html += '<span class="l-chord">' + esc(shiftLine(line, transposeSteps)) + '</span>';
+    else                       html += '<span class="l-lyric">' + esc(line) + '</span>';
+  });
+  el.innerHTML = html;
+  el.style.fontSize = fontSize + 'px';
+}
+
+/* ══════════════════════════════════════
+   AUTO-SCROLL  (requestAnimationFrame)
+   Frame-rate independent — works smoothly on all phones
+══════════════════════════════════════ */
+let isScrolling = false;
+let rafId       = null;
+let lastTs      = null;
+let scrollSpeed = 0.7; // px per frame at 60fps
+
+function rafTick(ts) {
+  if (!isScrolling) return;
+  if (!lastTs) lastTs = ts;
+  const delta = ts - lastTs; lastTs = ts;
+  // Frame-rate independent: normalise to 60fps
+  window.scrollBy(0, scrollSpeed * (delta / 16.67));
+  // Stop at very bottom
+  const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+  if (atEnd) { pauseScroll(); return }
+  rafId = requestAnimationFrame(rafTick);
+}
+
+function startScroll() {
+  if (isScrolling) return;
+  isScrolling = true; lastTs = null;
+  rafId = requestAnimationFrame(rafTick);
   syncScrollUI();
 }
-function pauseScroll(){
-  _scrolling=false;
-  if(_rafId){cancelAnimationFrame(_rafId);_rafId=null}
-  _lastTime=null;
+function pauseScroll() {
+  isScrolling = false;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null }
+  lastTs = null;
   syncScrollUI();
 }
-function resetScroll(){
-  pauseScroll();
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function jumpEnd(){
-  pauseScroll();
-  window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'});
-}
-function setSpeed(v){
-  // map slider 1-10 → 0.3–3.5 px/frame
-  _speed=0.3+(parseFloat(v)-1)*(3.5-0.3)/9;
-  ['speed','speed-mob','shud-slider'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=v});
-}
-function syncScrollUI(){
-  const play=document.getElementById('btn-play'),pause=document.getElementById('btn-pause');
-  const toast=document.getElementById('toast'),icon=document.getElementById('shud-icon');
-  if(play)play.style.display=_scrolling?'none':'flex';
-  if(pause)pause.style.display=_scrolling?'flex':'none';
-  if(toast)toast.classList.toggle('show',_scrolling);
-  if(icon){icon.innerHTML=_scrolling?'<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>':'<polygon points="5,3 19,12 5,21"/>'}
-}
+function toggleScroll() { isScrolling ? pauseScroll() : startScroll() }
+function resetScroll()  { pauseScroll(); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+function jumpToEnd()    { pauseScroll(); window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }) }
 
-/* ─ setlist navigation ─ */
-function initSetlistNav(){
-  if(!SL_ID)return;
-  const sets=getSetlists();const sl=sets.find(s=>s.id===SL_ID);if(!sl)return;
-  const total=sl.songIds.length;
-  const nav=document.getElementById('sl-nav');nav.classList.add('show');
-  document.getElementById('sl-nav-name').textContent='🎵 '+sl.name;
-  document.getElementById('sl-nav-pos').textContent='Song '+(SL_IDX+1)+' of '+total;
-  const prev=document.getElementById('sl-prev-btn'),next=document.getElementById('sl-next-btn');
-  prev.disabled=SL_IDX<=0;
-  next.disabled=SL_IDX>=total-1;
-  prev.addEventListener('click',()=>{
-    if(SL_IDX>0){pauseScroll();const nid=sl.songIds[SL_IDX-1];window.location.href='song.html?id='+encodeURIComponent(nid)+'&sl='+SL_ID+'&sli='+(SL_IDX-1)}
-  });
-  next.addEventListener('click',()=>{
-    if(SL_IDX<total-1){pauseScroll();const nid=sl.songIds[SL_IDX+1];window.location.href='song.html?id='+encodeURIComponent(nid)+'&sl='+SL_ID+'&sli='+(SL_IDX+1)}
+function setScrollSpeed(v) {
+  // Map 1–10 → 0.25–3.8 px/frame (smooth range for mobile reading)
+  scrollSpeed = 0.25 + (parseFloat(v) - 1) * (3.8 - 0.25) / 9;
+  document.getElementById('speed-val').textContent = v;
+  // Sync all sliders
+  ['speed-slider', 'shud-speed'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = v;
   });
 }
 
-/* ─ stage mode ─ */
-function enterStage(){
+function syncScrollUI() {
+  const btn   = document.getElementById('play-pause-btn');
+  const icon  = document.getElementById('play-pause-icon');
+  const shIcon = document.getElementById('shud-icon');
+  const bar   = document.getElementById('player-bar');
+
+  if (btn)  btn.classList.toggle('playing', isScrolling);
+  if (bar)  bar.classList.toggle('playing', isScrolling);
+
+  const playIcon  = '<polygon points="5,3 19,12 5,21"/>';
+  const pauseIcon = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  if (icon)  icon.innerHTML  = isScrolling ? pauseIcon : playIcon;
+  if (shIcon) shIcon.innerHTML = isScrolling ? pauseIcon : playIcon;
+}
+
+/* ══════════════════════════════════════
+   SETLIST NAVIGATION
+══════════════════════════════════════ */
+function initSetlistNav() {
+  if (!SL_ID) return;
+  const sets = getSetlists();
+  const sl   = sets.find(s => s.id === SL_ID);
+  if (!sl) return;
+  const total = sl.songIds.length;
+  const bar   = document.getElementById('sl-bar');
+  bar.classList.add('show');
+  document.getElementById('sl-name').textContent = sl.name;
+  document.getElementById('sl-pos').textContent  = 'Song ' + (SL_IDX + 1) + ' of ' + total;
+  const prev = document.getElementById('sl-prev-btn');
+  const next = document.getElementById('sl-next-btn');
+  prev.disabled = SL_IDX <= 0;
+  next.disabled = SL_IDX >= total - 1;
+  prev.addEventListener('click', () => {
+    if (SL_IDX > 0) { pauseScroll(); goToSL(sl.songIds[SL_IDX - 1], SL_IDX - 1) }
+  });
+  next.addEventListener('click', () => {
+    if (SL_IDX < total - 1) { pauseScroll(); goToSL(sl.songIds[SL_IDX + 1], SL_IDX + 1) }
+  });
+}
+function goToSL(songId, idx) {
+  window.location.href = 'song.html?id=' + encodeURIComponent(songId) + '&sl=' + SL_ID + '&sli=' + idx;
+}
+
+/* ══════════════════════════════════════
+   STAGE MODE
+══════════════════════════════════════ */
+function enterStage() {
   document.body.classList.add('stage');
-  document.documentElement.requestFullscreen?.().catch(()=>{});
+  document.documentElement.requestFullscreen?.().catch(() => {});
 }
-function exitStage(){
+function exitStage() {
   document.body.classList.remove('stage');
-  document.exitFullscreen?.().catch(()=>{});
+  document.exitFullscreen?.().catch(() => {});
 }
 
-/* ─ settings ─ */
-const $sm=document.getElementById('settings-modal');
-const $apiIn=document.getElementById('api-input');
-const $apiSt=document.getElementById('api-status');
-function openSettings(){$apiIn.value=apiUrl();$apiSt.className='field-status';$sm.classList.add('open');setTimeout(()=>$apiIn.focus(),200)}
-function closeSettings(){$sm.classList.remove('open')}
-function setApiSt(t,m){$apiSt.textContent=m;$apiSt.className='field-status '+t}
-document.getElementById('close-settings').addEventListener('click',closeSettings);
-document.getElementById('settings-btn').addEventListener('click',openSettings);
-document.getElementById('pb-settings-btn').addEventListener('click',openSettings);
-$sm.addEventListener('click',e=>{if(e.target===$sm)closeSettings()});
-document.getElementById('btn-save-api').addEventListener('click',()=>{
-  const u=$apiIn.value.trim();
-  if(!u){setApiSt('err','Please enter a URL.');return}
-  if(!u.startsWith('https://')){setApiSt('err','URL must start with https://');return}
-  saveApiUrl(u);setApiSt('ok','✓ Saved! Reloading…');
-  setTimeout(()=>{closeSettings();loadSong(SONG_ID)},700);
-});
-document.getElementById('btn-test-api').addEventListener('click',async()=>{
-  const u=$apiIn.value.trim();if(!u){setApiSt('err','Enter URL first.');return}
-  setApiSt('ok','Testing…');
-  try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();setApiSt('ok','✓ Found '+(Array.isArray(d)?d.length:'?')+' songs.');}
-  catch(e){setApiSt('err','✗ '+e.message)}
-});
-document.getElementById('btn-clear-api').addEventListener('click',()=>{clearApiUrl();$apiIn.value='';setApiSt('ok','Cleared.')});
+/* ══════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════ */
+const $settingsOverlay = document.getElementById('settings-overlay');
+const $apiInput        = document.getElementById('api-url-input');
+const $apiStatus       = document.getElementById('api-status');
 
-/* ─ player bar controls ─ */
-document.getElementById('btn-play').addEventListener('click',startScroll);
-document.getElementById('btn-pause').addEventListener('click',pauseScroll);
-document.getElementById('btn-reset').addEventListener('click',resetScroll);
-document.getElementById('btn-end').addEventListener('click',jumpEnd);
-document.getElementById('speed').addEventListener('input',e=>setSpeed(e.target.value));
-document.getElementById('speed-mob').addEventListener('input',e=>setSpeed(e.target.value));
-document.getElementById('shud-slider').addEventListener('input',e=>setSpeed(e.target.value));
-document.getElementById('shud-play-btn').addEventListener('click',()=>_scrolling?pauseScroll():startScroll());
-document.getElementById('shud-exit-btn').addEventListener('click',exitStage);
-document.getElementById('tp-up').addEventListener('click',()=>setTp(_tp+1));
-document.getElementById('tp-dn').addEventListener('click',()=>setTp(_tp-1));
-document.getElementById('tp-val').addEventListener('click',resetTp);
-document.getElementById('fs-up').addEventListener('click',()=>{_fs=Math.min(_fs+2,36);const el=document.getElementById('cs');if(el)el.style.fontSize=_fs+'px'});
-document.getElementById('fs-dn').addEventListener('click',()=>{_fs=Math.max(_fs-2,10);const el=document.getElementById('cs');if(el)el.style.fontSize=_fs+'px'});
-document.getElementById('btn-stage').addEventListener('click',enterStage);
+function openSettings() {
+  $apiInput.value = apiUrl();
+  $apiStatus.className = 'field-status';
+  $settingsOverlay.classList.add('open');
+  setTimeout(() => $apiInput.focus(), 200);
+}
+function closeSettings() { $settingsOverlay.classList.remove('open') }
+function setApiStatus(type, msg) { $apiStatus.textContent = msg; $apiStatus.className = 'field-status ' + type }
 
-/* ─ keyboard ─ */
-document.addEventListener('keydown',e=>{
-  if($sm.classList.contains('open')){if(e.key==='Escape')closeSettings();return}
-  if(document.body.classList.contains('stage')){
-    if(e.key==='Escape')exitStage();
-    if(e.key===' '||e.key.toLowerCase()==='k'){e.preventDefault();_scrolling?pauseScroll():startScroll()}
-    if(e.key==='ArrowUp'){e.preventDefault();window.scrollBy(0,-120)}
-    if(e.key==='ArrowDown'){e.preventDefault();window.scrollBy(0,120)}
-    // Setlist nav in stage
-    if(e.key==='ArrowLeft')document.getElementById('sl-prev-btn')?.click();
-    if(e.key==='ArrowRight')document.getElementById('sl-next-btn')?.click();
+document.getElementById('close-settings-btn').addEventListener('click', closeSettings);
+document.getElementById('settings-open-btn').addEventListener('click', openSettings);
+document.getElementById('pb-settings-btn').addEventListener('click', openSettings);
+$settingsOverlay.addEventListener('click', e => { if (e.target === $settingsOverlay) closeSettings() });
+
+document.getElementById('save-api-btn').addEventListener('click', () => {
+  const u = $apiInput.value.trim();
+  if (!u) { setApiStatus('err', 'Please enter a URL.'); return }
+  if (!u.startsWith('https://')) { setApiStatus('err', 'URL must start with https://'); return }
+  saveApiUrl(u); setApiStatus('ok', 'Saved. Reloading song…');
+  setTimeout(() => { closeSettings(); loadSong(SONG_ID) }, 700);
+});
+document.getElementById('test-api-btn').addEventListener('click', async () => {
+  const u = $apiInput.value.trim();
+  if (!u) { setApiStatus('err', 'Enter a URL first.'); return }
+  setApiStatus('ok', 'Testing connection…');
+  try {
+    const r = await fetch(u); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json(); setApiStatus('ok', 'Connected — ' + (Array.isArray(d) ? d.length : '?') + ' songs found.');
+  } catch(e) { setApiStatus('err', 'Failed: ' + e.message) }
+});
+document.getElementById('clear-api-btn').addEventListener('click', () => {
+  clearApiUrl(); $apiInput.value = ''; setApiStatus('ok', 'URL cleared.');
+});
+
+/* ══════════════════════════════════════
+   CONTROL BINDINGS
+══════════════════════════════════════ */
+document.getElementById('play-pause-btn').addEventListener('click', toggleScroll);
+document.getElementById('btn-to-top').addEventListener('click', resetScroll);
+document.getElementById('btn-to-bottom').addEventListener('click', jumpToEnd);
+
+document.getElementById('speed-slider').addEventListener('input', e => setScrollSpeed(e.target.value));
+document.getElementById('shud-speed').addEventListener('input', e => setScrollSpeed(e.target.value));
+
+document.getElementById('tp-up-btn').addEventListener('click',   () => setTranspose(transposeSteps + 1));
+document.getElementById('tp-down-btn').addEventListener('click', () => setTranspose(transposeSteps - 1));
+document.getElementById('tp-value-btn').addEventListener('click', resetTranspose);
+
+document.getElementById('font-up-btn').addEventListener('click', () => {
+  fontSize = Math.min(fontSize + 2, 36);
+  const el = document.getElementById('cs'); if (el) el.style.fontSize = fontSize + 'px';
+});
+document.getElementById('font-down-btn').addEventListener('click', () => {
+  fontSize = Math.max(fontSize - 2, 10);
+  const el = document.getElementById('cs'); if (el) el.style.fontSize = fontSize + 'px';
+});
+
+document.getElementById('stage-btn').addEventListener('click', enterStage);
+document.getElementById('shud-play-btn').addEventListener('click', toggleScroll);
+document.getElementById('shud-exit-btn').addEventListener('click', exitStage);
+document.getElementById('stage-exit-pill').addEventListener('click', exitStage);
+
+/* ══════════════════════════════════════
+   KEYBOARD SHORTCUTS
+══════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if ($settingsOverlay.classList.contains('open')) {
+    if (e.key === 'Escape') closeSettings();
     return;
   }
-  const tag=document.activeElement.tagName;
-  if(e.key==='Escape')exitStage();
-  if((e.key===' '||e.key.toLowerCase()==='k')&&tag!=='INPUT'){e.preventDefault();_scrolling?pauseScroll():startScroll()}
-  if(e.key===']')setTp(_tp+1);
-  if(e.key==='[')setTp(_tp-1);
-  if(e.key==='\\')resetTp();
-  if((e.key==='+'||e.key==='=')&&tag!=='INPUT'){_fs=Math.min(_fs+2,36);document.getElementById('cs').style.fontSize=_fs+'px'}
-  if(e.key==='-'&&tag!=='INPUT'){_fs=Math.max(_fs-2,10);document.getElementById('cs').style.fontSize=_fs+'px'}
-  if(e.key.toLowerCase()==='f'&&tag!=='INPUT')enterStage();
-  if(e.key.toLowerCase()==='t'&&tag!=='INPUT')resetScroll();
-  if(e.key==='ArrowLeft'&&SL_ID)document.getElementById('sl-prev-btn')?.click();
-  if(e.key==='ArrowRight'&&SL_ID)document.getElementById('sl-next-btn')?.click();
+  if (document.body.classList.contains('stage')) {
+    if (e.key === 'Escape') exitStage();
+    if (e.key === ' ' || e.key.toLowerCase() === 'k') { e.preventDefault(); toggleScroll() }
+    if (e.key === 'ArrowUp')    { e.preventDefault(); window.scrollBy(0, -120) }
+    if (e.key === 'ArrowDown')  { e.preventDefault(); window.scrollBy(0, 120) }
+    if (e.key === 'ArrowLeft')  document.getElementById('sl-prev-btn')?.click();
+    if (e.key === 'ArrowRight') document.getElementById('sl-next-btn')?.click();
+    return;
+  }
+  const tag = document.activeElement.tagName;
+  if (e.key === 'Escape') exitStage();
+  if ((e.key === ' ' || e.key.toLowerCase() === 'k') && tag !== 'INPUT') { e.preventDefault(); toggleScroll() }
+  if (e.key === ']') setTranspose(transposeSteps + 1);
+  if (e.key === '[') setTranspose(transposeSteps - 1);
+  if (e.key === '\\') resetTranspose();
+  if ((e.key === '+' || e.key === '=') && tag !== 'INPUT') { fontSize = Math.min(fontSize+2,36); document.getElementById('cs').style.fontSize = fontSize+'px' }
+  if (e.key === '-' && tag !== 'INPUT') { fontSize = Math.max(fontSize-2,10); document.getElementById('cs').style.fontSize = fontSize+'px' }
+  if (e.key.toLowerCase() === 'f' && tag !== 'INPUT') enterStage();
+  if (e.key.toLowerCase() === 't' && tag !== 'INPUT') resetScroll();
+  if (e.key === 'ArrowLeft' && SL_ID)  document.getElementById('sl-prev-btn')?.click();
+  if (e.key === 'ArrowRight' && SL_ID) document.getElementById('sl-next-btn')?.click();
 });
 
-/* ─ load song ─ */
-function showErr(msg){const el=document.getElementById('err-bar');el.innerHTML=msg;el.style.display='block'}
-function hideLoading(){document.getElementById('ld').classList.add('gone')}
+/* ══════════════════════════════════════
+   LOAD SONG
+══════════════════════════════════════ */
+async function loadSong(id) {
+  const url = apiUrl();
+  if (!url) {
+    hideLoading();
+    showError('No API URL configured. <a onclick="openSettings()">Open Settings</a>');
+    return;
+  }
+  try {
+    const r = await fetch(url + '?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const songs = await r.json();
+    const song  = songs.find(s => String(s.ID) === String(id));
+    if (!song)  throw new Error('Song "' + id + '" not found.');
 
-async function loadSong(id){
-  const url=apiUrl();
-  if(!url){hideLoading();showErr('No API URL configured. <a onclick="openSettings()">Open Settings</a>');return}
-  try{
-    const r=await fetch(url+'?t='+Date.now());
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const songs=await r.json();
-    const song=songs.find(s=>String(s.ID)===String(id));
-    if(!song)throw new Error('Song "'+id+'" not found in sheet.');
-    _raw=song.Content||'';
-    document.title=(song.Title||'Song')+' — Chord Stage';
-    // Populate hero
-    document.getElementById('h-title').textContent=song.Title||'Untitled';
-    document.getElementById('h-artist').textContent=song.Artist||'';
-    document.getElementById('pb-title').textContent=song.Title||'Untitled';
-    document.getElementById('pb-artist').textContent=song.Artist||'';
-    const bk=document.getElementById('b-key'),bc=document.getElementById('b-capo'),md=document.getElementById('m-dot');
-    if(song.Key&&song.Key.trim()){bk.textContent='Key of '+song.Key;bk.style.display='inline-flex';if(md)md.style.display='inline'}
-    if(song.Capo&&String(song.Capo).trim()&&String(song.Capo).trim()!=='0'){bc.textContent='Capo '+song.Capo;bc.style.display='inline-flex'}
-    const[c1,c2]=pal(song.Title||song.ID||'');
-    const letter=ltr(song.Title);
-    const hg=document.getElementById('hero-grad'),ha=document.getElementById('hero-art'),pa=document.getElementById('pb-art');
-    hg.style.background='linear-gradient(160deg,'+c1+' 0%,transparent 65%)';
-    ha.style.background='linear-gradient(145deg,'+c1+','+c2+')';ha.textContent=letter;
-    pa.style.background='linear-gradient(145deg,'+c1+','+c2+')';pa.textContent=letter;
-    updateTpUI();
+    rawContent = song.Content || '';
+    document.title = (song.Title || 'Song') + ' — Chord Stage';
+
+    // Topbar
+    document.getElementById('top-title').textContent  = song.Title  || 'Untitled';
+    document.getElementById('top-artist').textContent = song.Artist || '';
+
+    // Badges
+    const bk = document.getElementById('badge-key');
+    const bc = document.getElementById('badge-capo');
+    if (song.Key && song.Key.trim()) {
+      bk.textContent = 'Key of ' + song.Key; bk.style.display = 'inline-flex';
+    }
+    if (song.Capo && String(song.Capo).trim() && String(song.Capo).trim() !== '0') {
+      bc.textContent = 'Capo ' + song.Capo; bc.style.display = 'inline-flex';
+    }
+
+    updateTransposeUI();
     renderSheet();
     initSetlistNav();
-  }catch(e){
-    showErr('Could not load song: '+e.message+'<br><a href="index.html" style="color:var(--green)">← Back to library</a>');
-  }finally{hideLoading()}
+  } catch(e) {
+    showError('Could not load song: ' + e.message + '<br><a href="index.html">Back to library</a>');
+  } finally {
+    hideLoading();
+  }
 }
 
-/* ─ boot ─ */
+/* ── Boot ── */
 syncScrollUI();
-setSpeed(3);
-if(SONG_ID)loadSong(SONG_ID);
-else{hideLoading();showErr('No song ID. <a href="index.html">← Back to library</a>')}
+setScrollSpeed(3);
+if (SONG_ID) {
+  loadSong(SONG_ID);
+} else {
+  hideLoading();
+  showError('No song selected. <a href="index.html">Go to library</a>');
+}
 </script>
 </body>
 </html>
